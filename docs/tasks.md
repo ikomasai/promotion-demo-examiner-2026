@@ -67,13 +67,13 @@
 ### 2.5 Auth Feature
 
 - [X] T018 Create LoginScreen in src/features/auth/screens/LoginScreen.jsx
-- [ ] T019 Create GoogleLoginButton in src/features/auth/components/GoogleLoginButton.jsx
-- [ ] T020 Create AdminPasswordModal in src/features/auth/components/AdminPasswordModal.jsx (3 role options: koho/kikaku/super)
+- [X] T019 Create GoogleLoginButton in src/features/auth/components/GoogleLoginButton.jsx
+- [X] T020 Create AdminPasswordModal in src/features/auth/components/AdminPasswordModal.jsx (3 role options: koho/kikaku/super)
 
 ### 2.6 Edge Functions (Authentication)
 
-- [ ] T021 Create verify-admin-password Edge Function in supabase/functions/verify-admin-password/index.ts (bcrypt verification)
-- [ ] T022 [P] Create shared Supabase client in supabase/functions/_shared/supabase.ts
+- [X] T021 Create verify-admin-password Edge Function in supabase/functions/verify-admin-password/index.ts (bcrypt verification)
+- [X] T022 [P] Create shared Supabase client in supabase/functions/_shared/supabase.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
