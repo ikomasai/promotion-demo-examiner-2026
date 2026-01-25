@@ -41,32 +41,32 @@
 ### 2.1 Supabase Client & Database
 
 - [X] T005 Create Supabase client singleton in src/services/supabase/client.js
-- [ ] T006 Create database migration 001_initial_schema.sql in supabase/migrations/ (8 tables: profiles, organizations, projects, submissions, media_specs, check_items, rule_documents, app_settings)
-- [ ] T007 Create database migration 002_rls_policies.sql in supabase/migrations/ (RLS policies for all tables with admin role conditions)
-- [ ] T008 Create database migration 003_seed_data.sql in supabase/migrations/ (initial data for media_specs, check_items, rule_documents, app_settings)
+- [X] T006 Create database migration 001_initial_schema.sql in supabase/migrations/ (8 tables: profiles, organizations, projects, submissions, media_specs, check_items, rule_documents, app_settings)
+- [X] T007 Create database migration 002_rls_policies.sql in supabase/migrations/ (RLS policies for all tables with admin role conditions)
+- [X] T008 Create database migration 003_seed_data.sql in supabase/migrations/ (initial data for media_specs, check_items, rule_documents, app_settings)
 
 ### 2.2 Authentication Context
 
-- [ ] T009 Create AuthContext in src/shared/contexts/AuthContext.jsx (Google OAuth, @kindai.ac.jp domain restriction, profile fetch)
-- [ ] T010 [P] Create AdminContext in src/shared/contexts/AdminContext.jsx (admin role management, bcrypt verification via Edge Function)
-- [ ] T011 [P] Create ToastContext in src/shared/contexts/ToastContext.jsx (app-wide notifications)
+- [X] T009 Create AuthContext in src/shared/contexts/AuthContext.jsx (Google OAuth, @kindai.ac.jp domain restriction, profile fetch)
+- [X] T010 [P] Create AdminContext in src/shared/contexts/AdminContext.jsx (admin role management, bcrypt verification via Edge Function)
+- [X] T011 [P] Create ToastContext in src/shared/contexts/ToastContext.jsx (app-wide notifications)
 
 ### 2.3 Navigation Structure
 
-- [ ] T012 Create AppNavigator in src/navigation/AppNavigator.jsx (auth state routing)
-- [ ] T013 Create DrawerNavigator in src/navigation/DrawerNavigator.jsx (7 screens, admin-conditional visibility)
-- [ ] T014 Create CustomDrawerContent in src/navigation/components/CustomDrawerContent.jsx (dark theme sidebar with header/footer)
+- [X] T012 Create AppNavigator in src/navigation/AppNavigator.jsx (auth state routing)
+- [X] T013 Create DrawerNavigator in src/navigation/DrawerNavigator.jsx (7 screens, admin-conditional visibility)
+- [X] T014 Create CustomDrawerContent in src/navigation/components/CustomDrawerContent.jsx (dark theme sidebar with header/footer)
 
 ### 2.4 Shared Components
 
-- [ ] T015 [P] Create ScreenErrorBoundary in src/shared/components/ScreenErrorBoundary.jsx
-- [ ] T016 [P] Create LoadingSpinner in src/shared/components/LoadingSpinner.jsx
-- [ ] T017 [P] Create PlaceholderContent in src/shared/components/PlaceholderContent.jsx
+- [X] T015 [P] Create ScreenErrorBoundary in src/shared/components/ScreenErrorBoundary.jsx
+- [X] T016 [P] Create LoadingSpinner in src/shared/components/LoadingSpinner.jsx
+- [X] T017 [P] Create PlaceholderContent in src/shared/components/PlaceholderContent.jsx
 - [ ] T017a [P] Create SubmissionForm shared component in src/features/submission/components/SubmissionForm.jsx (used by both SandboxScreen and SubmitScreen)
 
 ### 2.5 Auth Feature
 
-- [ ] T018 Create LoginScreen in src/features/auth/screens/LoginScreen.jsx
+- [X] T018 Create LoginScreen in src/features/auth/screens/LoginScreen.jsx
 - [ ] T019 Create GoogleLoginButton in src/features/auth/components/GoogleLoginButton.jsx
 - [ ] T020 Create AdminPasswordModal in src/features/auth/components/AdminPasswordModal.jsx (3 role options: koho/kikaku/super)
 
