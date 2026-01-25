@@ -62,7 +62,7 @@
 - [X] T015 [P] Create ScreenErrorBoundary in src/shared/components/ScreenErrorBoundary.jsx
 - [X] T016 [P] Create LoadingSpinner in src/shared/components/LoadingSpinner.jsx
 - [X] T017 [P] Create PlaceholderContent in src/shared/components/PlaceholderContent.jsx
-- [ ] T017a [P] Create SubmissionForm shared component in src/features/submission/components/SubmissionForm.jsx (used by both SandboxScreen and SubmitScreen)
+- [X] T017a [P] Create SubmissionForm shared component in src/features/submission/components/SubmissionForm.jsx (used by both SandboxScreen and SubmitScreen)
 
 ### 2.5 Auth Feature
 
