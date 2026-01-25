@@ -40,7 +40,7 @@
 
 ### 2.1 Supabase Client & Database
 
-- [ ] T005 Create Supabase client singleton in src/services/supabase/client.js
+- [X] T005 Create Supabase client singleton in src/services/supabase/client.js
 - [ ] T006 Create database migration 001_initial_schema.sql in supabase/migrations/ (8 tables: profiles, organizations, projects, submissions, media_specs, check_items, rule_documents, app_settings)
 - [ ] T007 Create database migration 002_rls_policies.sql in supabase/migrations/ (RLS policies for all tables with admin role conditions)
 - [ ] T008 Create database migration 003_seed_data.sql in supabase/migrations/ (initial data for media_specs, check_items, rule_documents, app_settings)
