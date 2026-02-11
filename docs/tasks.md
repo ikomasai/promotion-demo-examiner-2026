@@ -1,398 +1,398 @@
-# Tasks: 生駒祭 情宣AI判定システム
+# タスク一覧: 生駒祭 情宣AI判定システム
 
-**Input**: Design documents from `/docs/`
-**Prerequisites**: spec.md (required)
+**入力**: `/docs/` 配下の設計ドキュメント
+**前提**: spec.md（必須）
 
-**Tests**: テストは明示的に要求されていないため省略
+**テスト**: テストは明示的に要求されていないため省略
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**構成**: タスクはユーザーストーリーごとにグループ化し、各ストーリーの独立した実装・テストを可能にする。
 
-## Format: `[ID] [P?] [Story] Description`
+## 記法: `[ID] [P?] [ストーリー] 説明`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
-- Include exact file paths in descriptions
+- **[P]**: 並列実行可能（異なるファイル、依存関係なし）
+- **[ストーリー]**: タスクが属するユーザーストーリー（例: US1, US2, US3）
+- 説明には正確なファイルパスを含める
 
-## Path Conventions
+## パス規約
 
-- **Frontend**: `src/` (Expo React Native Web)
-- **Backend**: `supabase/functions/` (Edge Functions)
-- **Database**: `supabase/migrations/`
-
----
-
-## Phase 1: Setup (Shared Infrastructure)
-
-**Purpose**: Project initialization and basic structure
-
-- [X] T001 Create project directory structure per spec.md (src/features, src/shared, src/navigation, src/services, src/assets)
-- [X] T002 [P] Verify package.json dependencies and install missing packages
-- [X] T003 [P] Create .gitignore for Expo project
-- [X] T004 Create root App.jsx with provider hierarchy (GestureHandler → Auth → Admin → Toast → Navigator)
+- **フロントエンド**: `src/` (Expo React Native Web)
+- **バックエンド**: `supabase/functions/` (Edge Functions)
+- **データベース**: `supabase/migrations/`
 
 ---
 
-## Phase 2: Foundational (Blocking Prerequisites)
+## Phase 1: セットアップ（共通基盤）
 
-**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
+**目的**: プロジェクト初期化と基本構造の構築
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
-
-### 2.1 Supabase Client & Database
-
-- [X] T005 Create Supabase client singleton in src/services/supabase/client.js
-- [X] T006 Create database migration josenai_001_schema.sql in supabase/migrations/ (9 tables: josenai_profiles, josenai_organizations, josenai_projects, josenai_submissions, josenai_media_specs, josenai_check_items, josenai_rule_documents, josenai_app_settings + user_profiles参照)
-- [X] T007 Create database migration josenai_002_rls.sql in supabase/migrations/ (RLS policies with fn_is_josenai_*() helper functions for screen-based RBAC)
-- [X] T008 Create database migration josenai_003_seed.sql in supabase/migrations/ (initial data for josenai_media_specs, josenai_check_items, josenai_rule_documents, josenai_app_settings)
-
-### 2.2 Authentication Context
-
-- [X] T009 Create AuthContext in src/shared/contexts/AuthContext.jsx (Google OAuth, @kindai.ac.jp domain restriction, user_profiles + josenai_profiles upsert)
-- [X] T010 [P] Create AdminContext in src/shared/contexts/AdminContext.jsx (screen-based RBAC management, bcrypt verification via Edge Function)
-- [X] T011 [P] Create ToastContext in src/shared/contexts/ToastContext.jsx (app-wide notifications)
-
-### 2.3 Navigation Structure
-
-- [X] T012 Create AppNavigator in src/navigation/AppNavigator.jsx (auth state routing)
-- [X] T013 Create DrawerNavigator in src/navigation/DrawerNavigator.jsx (7 screens, admin-conditional visibility)
-- [X] T014 Create CustomDrawerContent in src/navigation/components/CustomDrawerContent.jsx (dark theme sidebar with header/footer)
-
-### 2.4 Shared Components
-
-- [X] T015 [P] Create ScreenErrorBoundary in src/shared/components/ScreenErrorBoundary.jsx
-- [X] T016 [P] Create LoadingSpinner in src/shared/components/LoadingSpinner.jsx
-- [X] T017 [P] Create PlaceholderContent in src/shared/components/PlaceholderContent.jsx
-- [X] T017a [P] Create SubmissionForm shared component in src/features/submission/components/SubmissionForm.jsx (used by both SandboxScreen and SubmitScreen)
-
-### 2.5 Auth Feature
-
-- [X] T018 Create LoginScreen in src/features/auth/screens/LoginScreen.jsx
-- [X] T019 Create GoogleLoginButton in src/features/auth/components/GoogleLoginButton.jsx
-- [X] T020 Create AdminPasswordModal in src/features/auth/components/AdminPasswordModal.jsx (3 role options: 広報部/企画管理部/管理者)
-
-### 2.6 Edge Functions (Authentication)
-
-- [X] T021 Create verify-admin-password Edge Function in supabase/functions/verify-admin-password/index.ts (bcrypt verification)
-- [X] T022 [P] Create shared Supabase client in supabase/functions/_shared/supabase.ts
-
-**Checkpoint**: Foundation ready - Phase 2.7 migration can now begin
+- [X] T001 spec.md に基づくプロジェクトディレクトリ構造を作成（src/features, src/shared, src/navigation, src/services, src/assets）
+- [X] T002 [P] package.json の依存関係を確認し、不足パッケージをインストール
+- [X] T003 [P] Expo プロジェクト用 .gitignore を作成
+- [X] T004 ルート App.jsx をプロバイダー階層付きで作成（GestureHandler → Auth → Admin → Toast → Navigator）
 
 ---
 
-## Phase 2.7: Shared Supabase Migration (共有プロジェクト移行)
+## Phase 2: 基盤構築（必須前提）
 
-**Purpose**: Phase 2 の実装を共有 Ikomasai Supabase プロジェクトの新仕様に合わせて更新する
+**目的**: いかなるユーザーストーリーの実装にも先立って完了すべきコアインフラ
 
-**⚠️ CRITICAL**: Phase 3 以降の実装は本フェーズ完了後に開始すること
+**⚠️ 重要**: 本フェーズが完了するまでユーザーストーリーの作業は開始不可
 
-### 2.7.1 Database Migration Rewrite
+### 2.1 Supabase クライアント & データベース
 
-- [ ] T080 Rewrite josenai_001_schema.sql: Split profiles → user_profiles(参照) + josenai_profiles, rename all tables to josenai_* prefix, change submission_type CHECK to ('kikaku','koho'), add version/reviewed_by columns
-- [ ] T081 [P] Rewrite josenai_002_rls.sql: Replace admin_role checks with fn_is_josenai_*() helper functions (koho/kikaku/admin/reviewer), add screen-based RBAC policies
-- [ ] T082 [P] Rewrite josenai_003_seed.sql: Update all table names to josenai_* prefix
+- [X] T005 src/services/supabase/client.js に Supabase クライアントシングルトンを作成
+- [X] T006 supabase/migrations/ に josenai_001_schema.sql を作成（9テーブル: josenai_profiles, josenai_organizations, josenai_projects, josenai_submissions, josenai_media_specs, josenai_check_items, josenai_rule_documents, josenai_app_settings + user_profiles参照）
+- [X] T007 supabase/migrations/ に josenai_002_rls.sql を作成（fn_is_josenai_*() ヘルパー関数による画面ベース RBAC の RLS ポリシー）
+- [X] T008 supabase/migrations/ に josenai_003_seed.sql を作成（josenai_media_specs, josenai_check_items, josenai_rule_documents, josenai_app_settings の初期データ）
 
-### 2.7.2 Context Updates
+### 2.2 認証コンテキスト
 
-- [ ] T083 Update AuthContext.jsx: Change profile fetch from 'profiles' to user_profiles + josenai_profiles upsert flow
-- [ ] T084 Update AdminContext.jsx: Replace admin_role column logic with screen-based permission state (josenai_review_koho/kikaku/admin)
+- [X] T009 src/shared/contexts/AuthContext.jsx に AuthContext を作成（Google OAuth、@kindai.ac.jp ドメイン制限、user_profiles + josenai_profiles upsert）
+- [X] T010 [P] src/shared/contexts/AdminContext.jsx に AdminContext を作成（画面ベース RBAC 管理、Edge Function 経由の bcrypt 検証）
+- [X] T011 [P] src/shared/contexts/ToastContext.jsx に ToastContext を作成（アプリ全体の通知）
 
-### 2.7.3 Auth UI Updates
+### 2.3 ナビゲーション構造
 
-- [ ] T085 Update AdminPasswordModal.jsx: Change role labels from koho/kikaku/super to 広報部/企画管理部/管理者, update screen identifiers
+- [X] T012 src/navigation/AppNavigator.jsx に AppNavigator を作成（認証状態ルーティング）
+- [X] T013 src/navigation/DrawerNavigator.jsx に DrawerNavigator を作成（7画面、管理者条件付き表示）
+- [X] T014 src/navigation/components/CustomDrawerContent.jsx に CustomDrawerContent を作成（ダークテーマサイドバー、ヘッダー/フッター付き）
 
-### 2.7.4 Supabase Client Update
+### 2.4 共通コンポーネント
 
-- [ ] T086 [P] Update src/services/supabase/client.js: Verify shared project URL/keys compatibility
+- [X] T015 [P] src/shared/components/ScreenErrorBoundary.jsx に ScreenErrorBoundary を作成
+- [X] T016 [P] src/shared/components/LoadingSpinner.jsx に LoadingSpinner を作成
+- [X] T017 [P] src/shared/components/PlaceholderContent.jsx に PlaceholderContent を作成
+- [X] T017a [P] src/features/submission/components/SubmissionForm.jsx に SubmissionForm 共通コンポーネントを作成（SandboxScreen と SubmitScreen で共用）
 
-**Checkpoint**: All Phase 2 code aligned with shared Supabase spec - Phase 3+ can begin
+### 2.5 認証機能
 
----
+- [X] T018 src/features/auth/screens/LoginScreen.jsx に LoginScreen を作成
+- [X] T019 src/features/auth/components/GoogleLoginButton.jsx に GoogleLoginButton を作成
+- [X] T020 src/features/auth/components/AdminPasswordModal.jsx に AdminPasswordModal を作成（3つのロール選択: 広報部/企画管理部/管理者）
 
-## Phase 3: User Story 1 - サンドボックス（事前確認） (Priority: P1) 🎯 MVP
+### 2.6 Edge Functions（認証）
 
-**Goal**: AI判定を事前に試行できる機能（1日3回まで）
+- [X] T021 supabase/functions/verify-admin-password/index.ts に verify-admin-password Edge Function を作成（bcrypt 検証）
+- [X] T022 [P] supabase/functions/_shared/supabase.ts に共有 Supabase クライアントを作成
 
-**Independent Test**: ファイルをアップロードしてAI判定を実行、リスクスコアと指摘事項が表示される
-
-### Implementation for User Story 1
-
-- [ ] T023 [US1] Create SandboxScreen in src/features/submission/screens/SandboxScreen.jsx (submission type dropdown, remaining count display)
-- [ ] T023a [US1] Add AI skip option UI to SandboxScreen (display "AI判定をスキップ" button on timeout/error)
-- [ ] T024 [P] [US1] Create FileUploader component in src/features/submission/components/FileUploader.jsx (drag & drop, file validation)
-- [ ] T025 [P] [US1] Create OrganizationSelect component in src/features/submission/components/OrganizationSelect.jsx
-- [ ] T026 [P] [US1] Create ProjectSelect component in src/features/submission/components/ProjectSelect.jsx (filtered by organization)
-- [ ] T027 [P] [US1] Create MediaTypeSelect component in src/features/submission/components/MediaTypeSelect.jsx
-- [ ] T028 [US1] Create RiskScoreDisplay component in src/features/submission/components/RiskScoreDisplay.jsx (0-100 score with color coding)
-- [ ] T029 [US1] Create useOrganizations hook in src/features/submission/hooks/useOrganizations.js
-- [ ] T030 [US1] Create useProjects hook in src/features/submission/hooks/useProjects.js
-- [ ] T031 [US1] Create useMediaSpecs hook in src/features/submission/hooks/useMediaSpecs.js
-- [ ] T032 [US1] Create useSandbox hook in src/features/submission/hooks/useSandbox.js (josenai_profiles.sandbox_count_today management)
-- [ ] T033 [US1] Create sandbox Edge Function in supabase/functions/sandbox/index.ts (Gemini API integration, 30秒タイムアウト, タイムアウト/エラー時は skipped: true を返す)
-- [ ] T033a [US1] Add timeout handling and fallback to sandbox Edge Function (30s timeout, return ai_risk_details with skipped flag on failure)
-- [ ] T034 [P] [US1] Create geminiClient in supabase/functions/_shared/geminiClient.ts
-
-**Checkpoint**: User Story 1 (Sandbox) should be fully functional and testable independently
+**チェックポイント**: 基盤構築完了 — Phase 2.7 移行作業を開始可能
 
 ---
 
-## Phase 4: User Story 2 - 正式提出 (Priority: P2)
+## Phase 2.7: 共有 Supabase 移行（共有プロジェクト移行）
 
-**Goal**: 企画管理部 or 広報部を選択して正式提出、Google Drive に保存
+**目的**: Phase 2 の実装を共有 Ikomasai Supabase プロジェクトの新仕様に合わせて更新する
 
-**Independent Test**: ファイルを提出 → Google Drive に保存 → DB に提出レコード作成
+**⚠️ 重要**: Phase 3 以降の実装は本フェーズ完了後に開始すること
 
-### Implementation for User Story 2
+### 2.7.1 データベースマイグレーション書き換え
 
-- [ ] T035 [US2] Create SubmitScreen in src/features/submission/screens/SubmitScreen.jsx (risk-based flow: low/medium/high)
-- [ ] T037 [US2] Create SubmissionConfirmModal component in src/features/submission/components/SubmissionConfirmModal.jsx (warning for medium risk)
-- [ ] T038 [US2] Create HighRiskReasonInput component in src/features/submission/components/HighRiskReasonInput.jsx (required for high risk)
-- [ ] T039 [US2] Create useSubmission hook in src/features/submission/hooks/useSubmission.js (josenai_submissions INSERT)
-- [ ] T040 [US2] Create submit Edge Function in supabase/functions/submit/index.ts (Google Drive upload, josenai_submissions insert, アップロード失敗時はロールバック)
-- [ ] T041 [P] [US2] Create driveClient in supabase/functions/_shared/driveClient.ts (Google Drive API)
+- [ ] T080 josenai_001_schema.sql を書き換え: profiles → user_profiles(参照) + josenai_profiles に分割、全テーブルを josenai_* プレフィックスにリネーム、submission_type CHECK を ('kikaku','koho') に変更、version/reviewed_by カラム追加
+- [ ] T081 [P] josenai_002_rls.sql を書き換え: admin_role チェックを fn_is_josenai_*() ヘルパー関数（koho/kikaku/admin/reviewer）に置換、画面ベース RBAC ポリシー追加
+- [ ] T082 [P] josenai_003_seed.sql を書き換え: 全テーブル名を josenai_* プレフィックスに更新
 
-**Checkpoint**: User Story 2 (Submit) should be fully functional and testable independently
+### 2.7.2 コンテキスト更新
 
----
+- [ ] T083 AuthContext.jsx を更新: プロフィール取得を 'profiles' から user_profiles + josenai_profiles upsert フローに変更
+- [ ] T084 AdminContext.jsx を更新: admin_role カラムロジックを画面ベース権限状態（josenai_review_koho/kikaku/admin）に置換
 
-## Phase 5: User Story 3 - 提出履歴 (Priority: P3)
+### 2.7.3 認証 UI 更新
 
-**Goal**: 自分の提出履歴を確認できる
+- [ ] T085 AdminPasswordModal.jsx を更新: ロールラベルを koho/kikaku/super から 広報部/企画管理部/管理者 に変更、画面識別子を更新
 
-**Independent Test**: 提出一覧が表示され、各提出の詳細（ステータス、リスクスコア）が確認できる
+### 2.7.4 Supabase クライアント更新
 
-### Implementation for User Story 3
+- [ ] T086 [P] src/services/supabase/client.js を更新: 共有プロジェクトの URL/キー互換性を確認
 
-- [ ] T042 [US3] Create HistoryScreen in src/features/submission/screens/HistoryScreen.jsx
-- [ ] T043 [P] [US3] Create SubmissionCard component in src/features/submission/components/SubmissionCard.jsx
-- [ ] T044 [P] [US3] Create SubmissionDetailModal component in src/features/submission/components/SubmissionDetailModal.jsx
-- [ ] T045 [US3] Create useSubmissionHistory hook in src/features/submission/hooks/useSubmissionHistory.js (josenai_submissions query with RLS)
-- [ ] T046 [US3] Create StatusBadge component in src/features/submission/components/StatusBadge.jsx (pending/approved/rejected)
-- [ ] T046a [US3] Add delete button to HistoryScreen (visible only for status='pending')
-- [ ] T046b [US3] Create DeleteConfirmModal in src/features/submission/components/DeleteConfirmModal.jsx
-- [ ] T046c [US3] Create useSubmissionDelete hook in src/features/submission/hooks/useSubmissionDelete.js (josenai_submissions physical delete + Google Drive cleanup)
-
-**Checkpoint**: User Story 3 (History) should be fully functional and testable independently
+**チェックポイント**: Phase 2 のコードが共有 Supabase 仕様と整合 — Phase 3 以降を開始可能
 
 ---
 
-## Phase 6: User Story 4 - ダッシュボード（管理者審査） (Priority: P4)
+## Phase 3: ユーザーストーリー 1 - サンドボックス（事前確認） (優先度: P1) 🎯 MVP
 
-**Goal**: 担当範囲の提出一覧表示と審査機能
+**ゴール**: AI判定を事前に試行できる機能（1日3回まで）
 
-**Independent Test**: 管理者ログイン → 担当範囲の提出一覧表示 → 審査（承認/却下）実行
+**独立テスト**: ファイルをアップロードしてAI判定を実行、リスクスコアと指摘事項が表示される
 
-### Implementation for User Story 4
+### US1 の実装タスク
 
-- [ ] T047 [US4] Create DashboardScreen in src/features/review/screens/DashboardScreen.jsx (screen-based role filtering, submission_type tabs for 管理者)
-- [ ] T048 [P] [US4] Create SubmissionTable component in src/features/review/components/SubmissionTable.jsx
-- [ ] T049 [P] [US4] Create ReviewModal component in src/features/review/components/ReviewModal.jsx (approve/reject with comment)
-- [ ] T050 [P] [US4] Create DashboardFilters component in src/features/review/components/DashboardFilters.jsx (status, organization, date)
-- [ ] T051 [US4] Create useReviewSubmissions hook in src/features/review/hooks/useReviewSubmissions.js (screen-based RLS filtering: koho/kikaku/admin)
-- [ ] T052 [US4] Create useReview hook in src/features/review/hooks/useReview.js (optimistic locking with josenai_submissions.version)
-- [ ] T053 [US4] Create review Edge Function in supabase/functions/review/index.ts (josenai_submissions status update with version check)
+- [ ] T023 [US1] src/features/submission/screens/SandboxScreen.jsx に SandboxScreen を作成（提出先ドロップダウン、残回数表示）
+- [ ] T023a [US1] SandboxScreen に AI スキップオプション UI を追加（タイムアウト/エラー時に「AI判定をスキップ」ボタンを表示）
+- [ ] T024 [P] [US1] src/features/submission/components/FileUploader.jsx に FileUploader コンポーネントを作成（ドラッグ&ドロップ、ファイルバリデーション）
+- [ ] T025 [P] [US1] src/features/submission/components/OrganizationSelect.jsx に OrganizationSelect コンポーネントを作成
+- [ ] T026 [P] [US1] src/features/submission/components/ProjectSelect.jsx に ProjectSelect コンポーネントを作成（団体でフィルタリング）
+- [ ] T027 [P] [US1] src/features/submission/components/MediaTypeSelect.jsx に MediaTypeSelect コンポーネントを作成
+- [ ] T028 [US1] src/features/submission/components/RiskScoreDisplay.jsx に RiskScoreDisplay コンポーネントを作成（0-100 スコア、色分け表示）
+- [ ] T029 [US1] src/features/submission/hooks/useOrganizations.js に useOrganizations フックを作成
+- [ ] T030 [US1] src/features/submission/hooks/useProjects.js に useProjects フックを作成
+- [ ] T031 [US1] src/features/submission/hooks/useMediaSpecs.js に useMediaSpecs フックを作成
+- [ ] T032 [US1] src/features/submission/hooks/useSandbox.js に useSandbox フックを作成（josenai_profiles.sandbox_count_today 管理）
+- [ ] T033 [US1] supabase/functions/sandbox/index.ts に sandbox Edge Function を作成（Gemini API 連携、30秒タイムアウト、タイムアウト/エラー時は skipped: true を返す）
+- [ ] T033a [US1] sandbox Edge Function にタイムアウト処理とフォールバックを追加（30秒タイムアウト、失敗時は skipped フラグ付き ai_risk_details を返す）
+- [ ] T034 [P] [US1] supabase/functions/_shared/geminiClient.ts に geminiClient を作成
 
-**Checkpoint**: User Story 4 (Dashboard) should be fully functional and testable independently
-
----
-
-## Phase 7: User Story 5 - ルール管理 (Priority: P5)
-
-**Goal**: 情宣ルール・ガイドラインの閲覧と編集
-
-**Independent Test**: ルール文書一覧表示 → 編集 → 保存
-
-### Implementation for User Story 5
-
-- [ ] T054 [US5] Create RuleListScreen in src/features/rules/screens/RuleListScreen.jsx
-- [ ] T055 [P] [US5] Create RuleDocumentCard component in src/features/rules/components/RuleDocumentCard.jsx
-- [ ] T056 [P] [US5] Create RuleEditModal component in src/features/rules/components/RuleEditModal.jsx (Markdown editor)
-- [ ] T057 [US5] Create useRuleDocuments hook in src/features/rules/hooks/useRuleDocuments.js (josenai_rule_documents CRUD)
-
-**Checkpoint**: User Story 5 (Rules) should be fully functional and testable independently
+**チェックポイント**: US1（サンドボックス）が独立して完全に動作・テスト可能であること
 
 ---
 
-## Phase 8: User Story 6 - マスタ管理 (Priority: P6)
+## Phase 4: ユーザーストーリー 2 - 正式提出 (優先度: P2)
 
-**Goal**: 団体・企画の CSV インポートによる一括管理
+**ゴール**: 企画管理部 or 広報部を選択して正式提出、Google Drive に保存
 
-**Independent Test**: CSV ファイルアップロード → DB に反映 → プルダウンに表示
+**独立テスト**: ファイルを提出 → Google Drive に保存 → DB に提出レコード作成
 
-### Implementation for User Story 6
+### US2 の実装タスク
 
-- [ ] T058 [US6] Create MasterScreen in src/features/master/screens/MasterScreen.jsx
-- [ ] T059 [P] [US6] Create CsvImporter component in src/features/master/components/CsvImporter.jsx
-- [ ] T060 [P] [US6] Create OrganizationTable component in src/features/master/components/OrganizationTable.jsx
-- [ ] T061 [P] [US6] Create ProjectTable component in src/features/master/components/ProjectTable.jsx
-- [ ] T062 [US6] Create useCsvImport hook in src/features/master/hooks/useCsvImport.js (multipart/form-data upload to Edge Functions)
-- [ ] T063 [US6] Create import-organizations Edge Function in supabase/functions/import-organizations/index.ts (CSV parse + UPSERT josenai_organizations)
-- [ ] T064 [US6] Create import-projects Edge Function in supabase/functions/import-projects/index.ts (CSV parse + UPSERT josenai_projects)
+- [ ] T035 [US2] src/features/submission/screens/SubmitScreen.jsx に SubmitScreen を作成（リスクベースフロー: low/medium/high）
+- [ ] T037 [US2] src/features/submission/components/SubmissionConfirmModal.jsx に SubmissionConfirmModal コンポーネントを作成（中リスク時の警告）
+- [ ] T038 [US2] src/features/submission/components/HighRiskReasonInput.jsx に HighRiskReasonInput コンポーネントを作成（高リスク時の理由入力必須）
+- [ ] T039 [US2] src/features/submission/hooks/useSubmission.js に useSubmission フックを作成（josenai_submissions INSERT）
+- [ ] T040 [US2] supabase/functions/submit/index.ts に submit Edge Function を作成（Google Drive アップロード、josenai_submissions insert、アップロード失敗時はロールバック）
+- [ ] T041 [P] [US2] supabase/functions/_shared/driveClient.ts に driveClient を作成（Google Drive API）
 
-**Checkpoint**: User Story 6 (Master) should be fully functional and testable independently
-
----
-
-## Phase 9: User Story 7 - 設定 (Priority: P7)
-
-**Goal**: システム設定の管理
-
-**Independent Test**: 設定一覧表示 → 値変更 → 保存
-
-### Implementation for User Story 7
-
-- [ ] T065 [US7] Create SettingsScreen in src/features/settings/screens/SettingsScreen.jsx (josenai_app_settings management)
-- [ ] T066 [P] [US7] Create SettingItem component in src/features/settings/components/SettingItem.jsx
-- [ ] T067 [P] [US7] Create PasswordChangeModal component in src/features/settings/components/PasswordChangeModal.jsx
-- [ ] T068 [US7] Create useAppSettings hook in src/features/settings/hooks/useAppSettings.js (josenai_app_settings CRUD)
-- [ ] T069 [US7] Create update-password Edge Function in supabase/functions/update-password/index.ts (bcrypt hash generation)
-
-**Checkpoint**: User Story 7 (Settings) should be fully functional and testable independently
+**チェックポイント**: US2（正式提出）が独立して完全に動作・テスト可能であること
 
 ---
 
-## Phase 10: Polish & Cross-Cutting Concerns
+## Phase 5: ユーザーストーリー 3 - 提出履歴 (優先度: P3)
 
-**Purpose**: Improvements that affect multiple user stories
+**ゴール**: 自分の提出履歴を確認できる
 
-- [ ] T070 [P] Add responsive styles for mobile (< 768px) across all screens
-- [ ] T071 [P] Implement error handling and retry logic for Edge Functions
-- [ ] T072 Create GitHub Actions deploy workflow in .github/workflows/deploy.yml (GitHub Pages)
-- [ ] T073 Add loading states and skeleton screens
-- [ ] T074 Performance optimization (lazy loading, memoization)
-- [ ] T075 Security audit (RLS policy verification, input validation)
+**独立テスト**: 提出一覧が表示され、各提出の詳細（ステータス、リスクスコア）が確認できる
+
+### US3 の実装タスク
+
+- [ ] T042 [US3] src/features/submission/screens/HistoryScreen.jsx に HistoryScreen を作成
+- [ ] T043 [P] [US3] src/features/submission/components/SubmissionCard.jsx に SubmissionCard コンポーネントを作成
+- [ ] T044 [P] [US3] src/features/submission/components/SubmissionDetailModal.jsx に SubmissionDetailModal コンポーネントを作成
+- [ ] T045 [US3] src/features/submission/hooks/useSubmissionHistory.js に useSubmissionHistory フックを作成（josenai_submissions の RLS 付きクエリ）
+- [ ] T046 [US3] src/features/submission/components/StatusBadge.jsx に StatusBadge コンポーネントを作成（pending/approved/rejected）
+- [ ] T046a [US3] HistoryScreen に削除ボタンを追加（status='pending' の場合のみ表示）
+- [ ] T046b [US3] src/features/submission/components/DeleteConfirmModal.jsx に DeleteConfirmModal を作成
+- [ ] T046c [US3] src/features/submission/hooks/useSubmissionDelete.js に useSubmissionDelete フックを作成（josenai_submissions の物理削除 + Google Drive クリーンアップ）
+
+**チェックポイント**: US3（提出履歴）が独立して完全に動作・テスト可能であること
 
 ---
 
-## Dependencies & Execution Order
+## Phase 6: ユーザーストーリー 4 - ダッシュボード（管理者審査） (優先度: P4)
 
-### Phase Dependencies
+**ゴール**: 担当範囲の提出一覧表示と審査機能
 
-- **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup completion
-- **Migration (Phase 2.7)**: Depends on Phase 2 completion - BLOCKS all user stories
-- **User Stories (Phase 3-9)**: All depend on Phase 2.7 completion
-  - User stories can proceed in parallel (if staffed)
-  - Or sequentially in priority order (P1 → P2 → ... → P7)
-- **Polish (Phase 10)**: Depends on all desired user stories being complete
+**独立テスト**: 管理者ログイン → 担当範囲の提出一覧表示 → 審査（承認/却下）実行
 
-### User Story Dependencies
+### US4 の実装タスク
 
-- **User Story 1 (P1 - Sandbox)**: Can start after Phase 2.7 - No dependencies on other stories
-- **User Story 2 (P2 - Submit)**: Can start after Phase 2.7 - Reuses components from US1
-- **User Story 3 (P3 - History)**: Can start after Phase 2.7 - Independently testable
-- **User Story 4 (P4 - Dashboard)**: Can start after Phase 2.7 - Independently testable
-- **User Story 5 (P5 - Rules)**: Can start after Phase 2.7 - Independently testable
-- **User Story 6 (P6 - Master)**: Can start after Phase 2.7 - Independently testable
-- **User Story 7 (P7 - Settings)**: Can start after Phase 2.7 - Independently testable
+- [ ] T047 [US4] src/features/review/screens/DashboardScreen.jsx に DashboardScreen を作成（画面ベースロールフィルタリング、管理者用 submission_type タブ）
+- [ ] T048 [P] [US4] src/features/review/components/SubmissionTable.jsx に SubmissionTable コンポーネントを作成
+- [ ] T049 [P] [US4] src/features/review/components/ReviewModal.jsx に ReviewModal コンポーネントを作成（承認/却下、コメント付き）
+- [ ] T050 [P] [US4] src/features/review/components/DashboardFilters.jsx に DashboardFilters コンポーネントを作成（ステータス、団体、日付）
+- [ ] T051 [US4] src/features/review/hooks/useReviewSubmissions.js に useReviewSubmissions フックを作成（画面ベース RLS フィルタリング: koho/kikaku/admin）
+- [ ] T052 [US4] src/features/review/hooks/useReview.js に useReview フックを作成（josenai_submissions.version による楽観的ロック）
+- [ ] T053 [US4] supabase/functions/review/index.ts に review Edge Function を作成（josenai_submissions のステータス更新、バージョンチェック付き）
 
-### Within Each User Story
+**チェックポイント**: US4（ダッシュボード）が独立して完全に動作・テスト可能であること
 
-- Models/hooks before components
-- Shared components before screen-specific components
-- Hooks before screens that use them
-- Edge Functions can be developed in parallel with frontend
+---
 
-### Parallel Opportunities
+## Phase 7: ユーザーストーリー 5 - ルール管理 (優先度: P5)
 
-**Phase 2 (Foundational) Parallel Groups:**
+**ゴール**: 情宣ルール・ガイドラインの閲覧と編集
+
+**独立テスト**: ルール文書一覧表示 → 編集 → 保存
+
+### US5 の実装タスク
+
+- [ ] T054 [US5] src/features/rules/screens/RuleListScreen.jsx に RuleListScreen を作成
+- [ ] T055 [P] [US5] src/features/rules/components/RuleDocumentCard.jsx に RuleDocumentCard コンポーネントを作成
+- [ ] T056 [P] [US5] src/features/rules/components/RuleEditModal.jsx に RuleEditModal コンポーネントを作成（Markdown エディタ）
+- [ ] T057 [US5] src/features/rules/hooks/useRuleDocuments.js に useRuleDocuments フックを作成（josenai_rule_documents CRUD）
+
+**チェックポイント**: US5（ルール管理）が独立して完全に動作・テスト可能であること
+
+---
+
+## Phase 8: ユーザーストーリー 6 - マスタ管理 (優先度: P6)
+
+**ゴール**: 団体・企画の CSV インポートによる一括管理
+
+**独立テスト**: CSV ファイルアップロード → DB に反映 → プルダウンに表示
+
+### US6 の実装タスク
+
+- [ ] T058 [US6] src/features/master/screens/MasterScreen.jsx に MasterScreen を作成
+- [ ] T059 [P] [US6] src/features/master/components/CsvImporter.jsx に CsvImporter コンポーネントを作成
+- [ ] T060 [P] [US6] src/features/master/components/OrganizationTable.jsx に OrganizationTable コンポーネントを作成
+- [ ] T061 [P] [US6] src/features/master/components/ProjectTable.jsx に ProjectTable コンポーネントを作成
+- [ ] T062 [US6] src/features/master/hooks/useCsvImport.js に useCsvImport フックを作成（multipart/form-data で Edge Functions にアップロード）
+- [ ] T063 [US6] supabase/functions/import-organizations/index.ts に import-organizations Edge Function を作成（CSV パース + josenai_organizations UPSERT）
+- [ ] T064 [US6] supabase/functions/import-projects/index.ts に import-projects Edge Function を作成（CSV パース + josenai_projects UPSERT）
+
+**チェックポイント**: US6（マスタ管理）が独立して完全に動作・テスト可能であること
+
+---
+
+## Phase 9: ユーザーストーリー 7 - 設定 (優先度: P7)
+
+**ゴール**: システム設定の管理
+
+**独立テスト**: 設定一覧表示 → 値変更 → 保存
+
+### US7 の実装タスク
+
+- [ ] T065 [US7] src/features/settings/screens/SettingsScreen.jsx に SettingsScreen を作成（josenai_app_settings 管理）
+- [ ] T066 [P] [US7] src/features/settings/components/SettingItem.jsx に SettingItem コンポーネントを作成
+- [ ] T067 [P] [US7] src/features/settings/components/PasswordChangeModal.jsx に PasswordChangeModal コンポーネントを作成
+- [ ] T068 [US7] src/features/settings/hooks/useAppSettings.js に useAppSettings フックを作成（josenai_app_settings CRUD）
+- [ ] T069 [US7] supabase/functions/update-password/index.ts に update-password Edge Function を作成（bcrypt ハッシュ生成）
+
+**チェックポイント**: US7（設定）が独立して完全に動作・テスト可能であること
+
+---
+
+## Phase 10: 仕上げ & 横断的関心事
+
+**目的**: 複数のユーザーストーリーにまたがる改善
+
+- [ ] T070 [P] 全画面にモバイル向けレスポンシブスタイルを追加（< 768px）
+- [ ] T071 [P] Edge Functions にエラーハンドリングとリトライロジックを実装
+- [ ] T072 .github/workflows/deploy.yml に GitHub Actions デプロイワークフローを作成（GitHub Pages）
+- [ ] T073 ローディング状態とスケルトンスクリーンを追加
+- [ ] T074 パフォーマンス最適化（遅延読み込み、メモ化）
+- [ ] T075 セキュリティ監査（RLS ポリシー検証、入力バリデーション）
+
+---
+
+## 依存関係 & 実行順序
+
+### フェーズ依存関係
+
+- **セットアップ（Phase 1）**: 依存なし — 即時開始可能
+- **基盤構築（Phase 2）**: セットアップ完了に依存
+- **移行（Phase 2.7）**: Phase 2 完了に依存 — 全ユーザーストーリーをブロック
+- **ユーザーストーリー（Phase 3-9）**: Phase 2.7 完了に依存
+  - 人員があれば並列進行可能
+  - または優先度順に逐次実行（P1 → P2 → ... → P7）
+- **仕上げ（Phase 10）**: 必要なユーザーストーリーの完了に依存
+
+### ユーザーストーリー依存関係
+
+- **US1（P1 - サンドボックス）**: Phase 2.7 完了後に開始可能 — 他ストーリーへの依存なし
+- **US2（P2 - 正式提出）**: Phase 2.7 完了後に開始可能 — US1 のコンポーネントを再利用
+- **US3（P3 - 提出履歴）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
+- **US4（P4 - ダッシュボード）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
+- **US5（P5 - ルール管理）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
+- **US6（P6 - マスタ管理）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
+- **US7（P7 - 設定）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
+
+### 各ユーザーストーリー内の順序
+
+- モデル/フックをコンポーネントより先に
+- 共通コンポーネントを画面固有コンポーネントより先に
+- フックをそれを使う画面より先に
+- Edge Functions はフロントエンドと並列開発可能
+
+### 並列実行の機会
+
+**Phase 2（基盤構築）並列グループ:**
 ```
-Group A: T005, T006, T007, T008 (Database)
-Group B: T009, T010, T011 (Contexts) - after T005
-Group C: T015, T016, T017 (Shared Components) - independent
-Group D: T018, T019, T020 (Auth UI) - after T009
-```
-
-**Phase 3 (US1 - Sandbox) Parallel Groups:**
-```
-Group A: T024, T025, T026, T027 (Input Components)
-Group B: T029, T030, T031 (Data Hooks)
-Group C: T033, T034 (Edge Functions)
-After Groups A, B, C: T023, T028, T032 (Screen & Integration)
+グループ A: T005, T006, T007, T008（データベース）
+グループ B: T009, T010, T011（コンテキスト） — T005 の後
+グループ C: T015, T016, T017（共通コンポーネント） — 独立
+グループ D: T018, T019, T020（認証 UI） — T009 の後
 ```
 
+**Phase 3（US1 - サンドボックス）並列グループ:**
+```
+グループ A: T024, T025, T026, T027（入力コンポーネント）
+グループ B: T029, T030, T031（データフック）
+グループ C: T033, T034（Edge Functions）
+グループ A, B, C 完了後: T023, T028, T032（画面 & 統合）
+```
+
 ---
 
-## Parallel Example: User Story 1 (Sandbox)
+## 並列実行例: ユーザーストーリー 1（サンドボックス）
 
 ```bash
-# Launch all input components together:
-Task: T024 "Create FileUploader component in src/features/submission/components/FileUploader.jsx"
-Task: T025 "Create OrganizationSelect component in src/features/submission/components/OrganizationSelect.jsx"
-Task: T026 "Create ProjectSelect component in src/features/submission/components/ProjectSelect.jsx"
-Task: T027 "Create MediaTypeSelect component in src/features/submission/components/MediaTypeSelect.jsx"
+# 全入力コンポーネントを同時に起動:
+タスク: T024 "src/features/submission/components/FileUploader.jsx に FileUploader コンポーネントを作成"
+タスク: T025 "src/features/submission/components/OrganizationSelect.jsx に OrganizationSelect コンポーネントを作成"
+タスク: T026 "src/features/submission/components/ProjectSelect.jsx に ProjectSelect コンポーネントを作成"
+タスク: T027 "src/features/submission/components/MediaTypeSelect.jsx に MediaTypeSelect コンポーネントを作成"
 
-# Launch all data hooks together:
-Task: T029 "Create useOrganizations hook in src/features/submission/hooks/useOrganizations.js"
-Task: T030 "Create useProjects hook in src/features/submission/hooks/useProjects.js"
-Task: T031 "Create useMediaSpecs hook in src/features/submission/hooks/useMediaSpecs.js"
+# 全データフックを同時に起動:
+タスク: T029 "src/features/submission/hooks/useOrganizations.js に useOrganizations フックを作成"
+タスク: T030 "src/features/submission/hooks/useProjects.js に useProjects フックを作成"
+タスク: T031 "src/features/submission/hooks/useMediaSpecs.js に useMediaSpecs フックを作成"
 
-# After components and hooks are ready:
-Task: T023 "Create SandboxScreen in src/features/submission/screens/SandboxScreen.jsx"
+# コンポーネントとフックの準備完了後:
+タスク: T023 "src/features/submission/screens/SandboxScreen.jsx に SandboxScreen を作成"
 ```
 
 ---
 
-## Implementation Strategy
+## 実装戦略
 
-### MVP First (User Story 1 Only)
+### MVP 優先（US1 のみ）
 
-1. Complete Phase 1: Setup
-2. Complete Phase 2: Foundational
-3. Complete Phase 2.7: Shared Supabase Migration (CRITICAL - blocks all stories)
-4. Complete Phase 3: User Story 1 (Sandbox)
-5. **STOP and VALIDATE**: Test Sandbox independently
-6. Deploy/demo if ready
+1. Phase 1: セットアップを完了
+2. Phase 2: 基盤構築を完了
+3. Phase 2.7: 共有 Supabase 移行を完了（重要 — 全ストーリーをブロック）
+4. Phase 3: US1（サンドボックス）を完了
+5. **停止して検証**: サンドボックスを独立テスト
+6. 準備ができればデプロイ/デモ
 
-### Incremental Delivery
+### インクリメンタルデリバリー
 
-1. Complete Setup + Foundational → Foundation ready
-2. Complete Phase 2.7: Migration → Shared Supabase aligned
-3. Add User Story 1 (Sandbox) → Test → Deploy (MVP!)
-4. Add User Story 2 (Submit) → Test → Deploy
-5. Add User Story 3 (History) → Test → Deploy
-6. Add User Story 4 (Dashboard) → Test → Deploy
-7. Add User Story 5-7 → Test → Deploy (Full Release)
+1. セットアップ + 基盤構築を完了 → 基盤準備完了
+2. Phase 2.7: 移行を完了 → 共有 Supabase 整合
+3. US1（サンドボックス）追加 → テスト → デプロイ（MVP!）
+4. US2（正式提出）追加 → テスト → デプロイ
+5. US3（提出履歴）追加 → テスト → デプロイ
+6. US4（ダッシュボード）追加 → テスト → デプロイ
+7. US5-7 追加 → テスト → デプロイ（フルリリース）
 
-### Parallel Team Strategy
+### 並列チーム戦略
 
-With multiple developers:
+複数の開発者がいる場合:
 
-1. Team completes Setup + Foundational + Phase 2.7 Migration together
-2. Once Phase 2.7 is done:
-   - Developer A: User Story 1 + 2 (Submission flow)
-   - Developer B: User Story 3 + 4 (History + Dashboard)
-   - Developer C: User Story 5 + 6 + 7 (Admin features)
-3. Stories complete and integrate independently
-
----
-
-## Summary
-
-| Phase | Tasks | Parallel Opportunities |
-|-------|-------|------------------------|
-| Phase 1: Setup | 4 | 2 |
-| Phase 2: Foundational | 19 | 9 |
-| Phase 2.7: Migration | 7 | 3 |
-| Phase 3: US1 - Sandbox | 14 | 7 |
-| Phase 4: US2 - Submit | 6 | 1 |
-| Phase 5: US3 - History | 8 | 4 |
-| Phase 6: US4 - Dashboard | 7 | 3 |
-| Phase 7: US5 - Rules | 4 | 2 |
-| Phase 8: US6 - Master | 7 | 3 |
-| Phase 9: US7 - Settings | 5 | 2 |
-| Phase 10: Polish | 6 | 2 |
-| **Total** | **87** | **38** |
-
-**MVP Scope**: Phase 1 + Phase 2 + Phase 2.7 + Phase 3 = **44 tasks**
+1. チーム全体でセットアップ + 基盤構築 + Phase 2.7 移行を完了
+2. Phase 2.7 完了後:
+   - 開発者 A: US1 + US2（提出フロー）
+   - 開発者 B: US3 + US4（履歴 + ダッシュボード）
+   - 開発者 C: US5 + US6 + US7（管理機能）
+3. 各ストーリーを独立して完成・統合
 
 ---
 
-## Notes
+## サマリー
 
-- [P] tasks = different files, no dependencies
-- [Story] label maps task to specific user story for traceability
-- Each user story should be independently completable and testable
-- Commit after each task or logical group
-- Stop at any checkpoint to validate story independently
-- Edge Functions use TypeScript (.ts) as required by Supabase
-- Frontend uses JavaScript (.jsx) as specified in tech stack
+| フェーズ | タスク数 | 並列実行可能数 |
+|----------|----------|----------------|
+| Phase 1: セットアップ | 4 | 2 |
+| Phase 2: 基盤構築 | 19 | 9 |
+| Phase 2.7: 移行 | 7 | 3 |
+| Phase 3: US1 - サンドボックス | 14 | 7 |
+| Phase 4: US2 - 正式提出 | 6 | 1 |
+| Phase 5: US3 - 提出履歴 | 8 | 4 |
+| Phase 6: US4 - ダッシュボード | 7 | 3 |
+| Phase 7: US5 - ルール管理 | 4 | 2 |
+| Phase 8: US6 - マスタ管理 | 7 | 3 |
+| Phase 9: US7 - 設定 | 5 | 2 |
+| Phase 10: 仕上げ | 6 | 2 |
+| **合計** | **87** | **38** |
+
+**MVP スコープ**: Phase 1 + Phase 2 + Phase 2.7 + Phase 3 = **44 タスク**
+
+---
+
+## 備考
+
+- [P] タスク = 異なるファイルで依存関係なし
+- [ストーリー] ラベルはタスクを特定のユーザーストーリーに紐付け、追跡性を確保
+- 各ユーザーストーリーは独立して完了・テスト可能であること
+- タスクまたは論理的なグループごとにコミット
+- 各チェックポイントで停止してストーリーを独立検証可能
+- Edge Functions は Supabase の要件に従い TypeScript (.ts) を使用
+- フロントエンドは技術スタックの指定に従い JavaScript (.jsx) を使用
