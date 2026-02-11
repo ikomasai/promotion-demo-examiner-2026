@@ -41,14 +41,14 @@
 ### 2.1 Supabase Client & Database
 
 - [X] T005 Create Supabase client singleton in src/services/supabase/client.js
-- [X] T006 Create database migration 001_initial_schema.sql in supabase/migrations/ (8 tables: profiles, organizations, projects, submissions, media_specs, check_items, rule_documents, app_settings)
-- [X] T007 Create database migration 002_rls_policies.sql in supabase/migrations/ (RLS policies for all tables with admin role conditions)
-- [X] T008 Create database migration 003_seed_data.sql in supabase/migrations/ (initial data for media_specs, check_items, rule_documents, app_settings)
+- [X] T006 Create database migration josenai_001_schema.sql in supabase/migrations/ (9 tables: josenai_profiles, josenai_organizations, josenai_projects, josenai_submissions, josenai_media_specs, josenai_check_items, josenai_rule_documents, josenai_app_settings + user_profiles参照)
+- [X] T007 Create database migration josenai_002_rls.sql in supabase/migrations/ (RLS policies with fn_is_josenai_*() helper functions for screen-based RBAC)
+- [X] T008 Create database migration josenai_003_seed.sql in supabase/migrations/ (initial data for josenai_media_specs, josenai_check_items, josenai_rule_documents, josenai_app_settings)
 
 ### 2.2 Authentication Context
 
-- [X] T009 Create AuthContext in src/shared/contexts/AuthContext.jsx (Google OAuth, @kindai.ac.jp domain restriction, profile fetch)
-- [X] T010 [P] Create AdminContext in src/shared/contexts/AdminContext.jsx (admin role management, bcrypt verification via Edge Function)
+- [X] T009 Create AuthContext in src/shared/contexts/AuthContext.jsx (Google OAuth, @kindai.ac.jp domain restriction, user_profiles + josenai_profiles upsert)
+- [X] T010 [P] Create AdminContext in src/shared/contexts/AdminContext.jsx (screen-based RBAC management, bcrypt verification via Edge Function)
 - [X] T011 [P] Create ToastContext in src/shared/contexts/ToastContext.jsx (app-wide notifications)
 
 ### 2.3 Navigation Structure
@@ -68,14 +68,43 @@
 
 - [X] T018 Create LoginScreen in src/features/auth/screens/LoginScreen.jsx
 - [X] T019 Create GoogleLoginButton in src/features/auth/components/GoogleLoginButton.jsx
-- [X] T020 Create AdminPasswordModal in src/features/auth/components/AdminPasswordModal.jsx (3 role options: koho/kikaku/super)
+- [X] T020 Create AdminPasswordModal in src/features/auth/components/AdminPasswordModal.jsx (3 role options: 広報部/企画管理部/管理者)
 
 ### 2.6 Edge Functions (Authentication)
 
 - [X] T021 Create verify-admin-password Edge Function in supabase/functions/verify-admin-password/index.ts (bcrypt verification)
 - [X] T022 [P] Create shared Supabase client in supabase/functions/_shared/supabase.ts
 
-**Checkpoint**: Foundation ready - user story implementation can now begin
+**Checkpoint**: Foundation ready - Phase 2.7 migration can now begin
+
+---
+
+## Phase 2.7: Shared Supabase Migration (共有プロジェクト移行)
+
+**Purpose**: Phase 2 の実装を共有 Ikomasai Supabase プロジェクトの新仕様に合わせて更新する
+
+**⚠️ CRITICAL**: Phase 3 以降の実装は本フェーズ完了後に開始すること
+
+### 2.7.1 Database Migration Rewrite
+
+- [ ] T080 Rewrite josenai_001_schema.sql: Split profiles → user_profiles(参照) + josenai_profiles, rename all tables to josenai_* prefix, change submission_type CHECK to ('kikaku','koho'), add version/reviewed_by columns
+- [ ] T081 [P] Rewrite josenai_002_rls.sql: Replace admin_role checks with fn_is_josenai_*() helper functions (koho/kikaku/admin/reviewer), add screen-based RBAC policies
+- [ ] T082 [P] Rewrite josenai_003_seed.sql: Update all table names to josenai_* prefix
+
+### 2.7.2 Context Updates
+
+- [ ] T083 Update AuthContext.jsx: Change profile fetch from 'profiles' to user_profiles + josenai_profiles upsert flow
+- [ ] T084 Update AdminContext.jsx: Replace admin_role column logic with screen-based permission state (josenai_review_koho/kikaku/admin)
+
+### 2.7.3 Auth UI Updates
+
+- [ ] T085 Update AdminPasswordModal.jsx: Change role labels from koho/kikaku/super to 広報部/企画管理部/管理者, update screen identifiers
+
+### 2.7.4 Supabase Client Update
+
+- [ ] T086 [P] Update src/services/supabase/client.js: Verify shared project URL/keys compatibility
+
+**Checkpoint**: All Phase 2 code aligned with shared Supabase spec - Phase 3+ can begin
 
 ---
 
@@ -97,7 +126,7 @@
 - [ ] T029 [US1] Create useOrganizations hook in src/features/submission/hooks/useOrganizations.js
 - [ ] T030 [US1] Create useProjects hook in src/features/submission/hooks/useProjects.js
 - [ ] T031 [US1] Create useMediaSpecs hook in src/features/submission/hooks/useMediaSpecs.js
-- [ ] T032 [US1] Create useSandbox hook in src/features/submission/hooks/useSandbox.js (daily count management)
+- [ ] T032 [US1] Create useSandbox hook in src/features/submission/hooks/useSandbox.js (josenai_profiles.sandbox_count_today management)
 - [ ] T033 [US1] Create sandbox Edge Function in supabase/functions/sandbox/index.ts (Gemini API integration, 30秒タイムアウト, タイムアウト/エラー時は skipped: true を返す)
 - [ ] T033a [US1] Add timeout handling and fallback to sandbox Edge Function (30s timeout, return ai_risk_details with skipped flag on failure)
 - [ ] T034 [P] [US1] Create geminiClient in supabase/functions/_shared/geminiClient.ts
@@ -108,18 +137,17 @@
 
 ## Phase 4: User Story 2 - 正式提出 (Priority: P2)
 
-**Goal**: 企画物/SNS を選択して正式提出、Google Drive に保存
+**Goal**: 企画管理部 or 広報部を選択して正式提出、Google Drive に保存
 
 **Independent Test**: ファイルを提出 → Google Drive に保存 → DB に提出レコード作成
 
 ### Implementation for User Story 2
 
 - [ ] T035 [US2] Create SubmitScreen in src/features/submission/screens/SubmitScreen.jsx (risk-based flow: low/medium/high)
-- [ ] T036 [US2] Create SubmissionForm component in src/features/submission/components/SubmissionForm.jsx (reuse from sandbox)
 - [ ] T037 [US2] Create SubmissionConfirmModal component in src/features/submission/components/SubmissionConfirmModal.jsx (warning for medium risk)
 - [ ] T038 [US2] Create HighRiskReasonInput component in src/features/submission/components/HighRiskReasonInput.jsx (required for high risk)
-- [ ] T039 [US2] Create useSubmission hook in src/features/submission/hooks/useSubmission.js
-- [ ] T040 [US2] Create submit Edge Function in supabase/functions/submit/index.ts (Google Drive upload, DB insert, アップロード失敗時はロールバックしてエラー表示)
+- [ ] T039 [US2] Create useSubmission hook in src/features/submission/hooks/useSubmission.js (josenai_submissions INSERT)
+- [ ] T040 [US2] Create submit Edge Function in supabase/functions/submit/index.ts (Google Drive upload, josenai_submissions insert, アップロード失敗時はロールバック)
 - [ ] T041 [P] [US2] Create driveClient in supabase/functions/_shared/driveClient.ts (Google Drive API)
 
 **Checkpoint**: User Story 2 (Submit) should be fully functional and testable independently
@@ -137,11 +165,11 @@
 - [ ] T042 [US3] Create HistoryScreen in src/features/submission/screens/HistoryScreen.jsx
 - [ ] T043 [P] [US3] Create SubmissionCard component in src/features/submission/components/SubmissionCard.jsx
 - [ ] T044 [P] [US3] Create SubmissionDetailModal component in src/features/submission/components/SubmissionDetailModal.jsx
-- [ ] T045 [US3] Create useSubmissionHistory hook in src/features/submission/hooks/useSubmissionHistory.js
+- [ ] T045 [US3] Create useSubmissionHistory hook in src/features/submission/hooks/useSubmissionHistory.js (josenai_submissions query with RLS)
 - [ ] T046 [US3] Create StatusBadge component in src/features/submission/components/StatusBadge.jsx (pending/approved/rejected)
 - [ ] T046a [US3] Add delete button to HistoryScreen (visible only for status='pending')
 - [ ] T046b [US3] Create DeleteConfirmModal in src/features/submission/components/DeleteConfirmModal.jsx
-- [ ] T046c [US3] Create useSubmissionDelete hook in src/features/submission/hooks/useSubmissionDelete.js (physical delete from DB + Google Drive)
+- [ ] T046c [US3] Create useSubmissionDelete hook in src/features/submission/hooks/useSubmissionDelete.js (josenai_submissions physical delete + Google Drive cleanup)
 
 **Checkpoint**: User Story 3 (History) should be fully functional and testable independently
 
@@ -155,13 +183,13 @@
 
 ### Implementation for User Story 4
 
-- [ ] T047 [US4] Create DashboardScreen in src/features/review/screens/DashboardScreen.jsx (admin role filtering, submission type tabs for super admin)
+- [ ] T047 [US4] Create DashboardScreen in src/features/review/screens/DashboardScreen.jsx (screen-based role filtering, submission_type tabs for 管理者)
 - [ ] T048 [P] [US4] Create SubmissionTable component in src/features/review/components/SubmissionTable.jsx
 - [ ] T049 [P] [US4] Create ReviewModal component in src/features/review/components/ReviewModal.jsx (approve/reject with comment)
 - [ ] T050 [P] [US4] Create DashboardFilters component in src/features/review/components/DashboardFilters.jsx (status, organization, date)
-- [ ] T051 [US4] Create useReviewSubmissions hook in src/features/review/hooks/useReviewSubmissions.js (RLS-based filtering)
-- [ ] T052 [US4] Create useReview hook in src/features/review/hooks/useReview.js (optimistic locking with version)
-- [ ] T053 [US4] Create review Edge Function in supabase/functions/review/index.ts (status update with version check)
+- [ ] T051 [US4] Create useReviewSubmissions hook in src/features/review/hooks/useReviewSubmissions.js (screen-based RLS filtering: koho/kikaku/admin)
+- [ ] T052 [US4] Create useReview hook in src/features/review/hooks/useReview.js (optimistic locking with josenai_submissions.version)
+- [ ] T053 [US4] Create review Edge Function in supabase/functions/review/index.ts (josenai_submissions status update with version check)
 
 **Checkpoint**: User Story 4 (Dashboard) should be fully functional and testable independently
 
@@ -178,7 +206,7 @@
 - [ ] T054 [US5] Create RuleListScreen in src/features/rules/screens/RuleListScreen.jsx
 - [ ] T055 [P] [US5] Create RuleDocumentCard component in src/features/rules/components/RuleDocumentCard.jsx
 - [ ] T056 [P] [US5] Create RuleEditModal component in src/features/rules/components/RuleEditModal.jsx (Markdown editor)
-- [ ] T057 [US5] Create useRuleDocuments hook in src/features/rules/hooks/useRuleDocuments.js
+- [ ] T057 [US5] Create useRuleDocuments hook in src/features/rules/hooks/useRuleDocuments.js (josenai_rule_documents CRUD)
 
 **Checkpoint**: User Story 5 (Rules) should be fully functional and testable independently
 
@@ -196,9 +224,9 @@
 - [ ] T059 [P] [US6] Create CsvImporter component in src/features/master/components/CsvImporter.jsx
 - [ ] T060 [P] [US6] Create OrganizationTable component in src/features/master/components/OrganizationTable.jsx
 - [ ] T061 [P] [US6] Create ProjectTable component in src/features/master/components/ProjectTable.jsx
-- [ ] T062 [US6] Create useCsvImport hook in src/features/master/hooks/useCsvImport.js (papaparse integration)
-- [ ] T063 [US6] Create import-organizations Edge Function in supabase/functions/import-organizations/index.ts
-- [ ] T064 [US6] Create import-projects Edge Function in supabase/functions/import-projects/index.ts
+- [ ] T062 [US6] Create useCsvImport hook in src/features/master/hooks/useCsvImport.js (multipart/form-data upload to Edge Functions)
+- [ ] T063 [US6] Create import-organizations Edge Function in supabase/functions/import-organizations/index.ts (CSV parse + UPSERT josenai_organizations)
+- [ ] T064 [US6] Create import-projects Edge Function in supabase/functions/import-projects/index.ts (CSV parse + UPSERT josenai_projects)
 
 **Checkpoint**: User Story 6 (Master) should be fully functional and testable independently
 
@@ -212,10 +240,10 @@
 
 ### Implementation for User Story 7
 
-- [ ] T065 [US7] Create SettingsScreen in src/features/settings/screens/SettingsScreen.jsx
+- [ ] T065 [US7] Create SettingsScreen in src/features/settings/screens/SettingsScreen.jsx (josenai_app_settings management)
 - [ ] T066 [P] [US7] Create SettingItem component in src/features/settings/components/SettingItem.jsx
 - [ ] T067 [P] [US7] Create PasswordChangeModal component in src/features/settings/components/PasswordChangeModal.jsx
-- [ ] T068 [US7] Create useAppSettings hook in src/features/settings/hooks/useAppSettings.js
+- [ ] T068 [US7] Create useAppSettings hook in src/features/settings/hooks/useAppSettings.js (josenai_app_settings CRUD)
 - [ ] T069 [US7] Create update-password Edge Function in supabase/functions/update-password/index.ts (bcrypt hash generation)
 
 **Checkpoint**: User Story 7 (Settings) should be fully functional and testable independently
@@ -240,21 +268,22 @@
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3-9)**: All depend on Foundational phase completion
+- **Foundational (Phase 2)**: Depends on Setup completion
+- **Migration (Phase 2.7)**: Depends on Phase 2 completion - BLOCKS all user stories
+- **User Stories (Phase 3-9)**: All depend on Phase 2.7 completion
   - User stories can proceed in parallel (if staffed)
   - Or sequentially in priority order (P1 → P2 → ... → P7)
 - **Polish (Phase 10)**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
 
-- **User Story 1 (P1 - Sandbox)**: Can start after Foundational - No dependencies on other stories
-- **User Story 2 (P2 - Submit)**: Can start after Foundational - Reuses components from US1
-- **User Story 3 (P3 - History)**: Can start after Foundational - Independently testable
-- **User Story 4 (P4 - Dashboard)**: Can start after Foundational - Independently testable
-- **User Story 5 (P5 - Rules)**: Can start after Foundational - Independently testable
-- **User Story 6 (P6 - Master)**: Can start after Foundational - Independently testable
-- **User Story 7 (P7 - Settings)**: Can start after Foundational - Independently testable
+- **User Story 1 (P1 - Sandbox)**: Can start after Phase 2.7 - No dependencies on other stories
+- **User Story 2 (P2 - Submit)**: Can start after Phase 2.7 - Reuses components from US1
+- **User Story 3 (P3 - History)**: Can start after Phase 2.7 - Independently testable
+- **User Story 4 (P4 - Dashboard)**: Can start after Phase 2.7 - Independently testable
+- **User Story 5 (P5 - Rules)**: Can start after Phase 2.7 - Independently testable
+- **User Story 6 (P6 - Master)**: Can start after Phase 2.7 - Independently testable
+- **User Story 7 (P7 - Settings)**: Can start after Phase 2.7 - Independently testable
 
 ### Within Each User Story
 
@@ -308,26 +337,28 @@ Task: T023 "Create SandboxScreen in src/features/submission/screens/SandboxScree
 ### MVP First (User Story 1 Only)
 
 1. Complete Phase 1: Setup
-2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
-3. Complete Phase 3: User Story 1 (Sandbox)
-4. **STOP and VALIDATE**: Test Sandbox independently
-5. Deploy/demo if ready
+2. Complete Phase 2: Foundational
+3. Complete Phase 2.7: Shared Supabase Migration (CRITICAL - blocks all stories)
+4. Complete Phase 3: User Story 1 (Sandbox)
+5. **STOP and VALIDATE**: Test Sandbox independently
+6. Deploy/demo if ready
 
 ### Incremental Delivery
 
 1. Complete Setup + Foundational → Foundation ready
-2. Add User Story 1 (Sandbox) → Test → Deploy (MVP!)
-3. Add User Story 2 (Submit) → Test → Deploy
-4. Add User Story 3 (History) → Test → Deploy
-5. Add User Story 4 (Dashboard) → Test → Deploy
-6. Add User Story 5-7 → Test → Deploy (Full Release)
+2. Complete Phase 2.7: Migration → Shared Supabase aligned
+3. Add User Story 1 (Sandbox) → Test → Deploy (MVP!)
+4. Add User Story 2 (Submit) → Test → Deploy
+5. Add User Story 3 (History) → Test → Deploy
+6. Add User Story 4 (Dashboard) → Test → Deploy
+7. Add User Story 5-7 → Test → Deploy (Full Release)
 
 ### Parallel Team Strategy
 
 With multiple developers:
 
-1. Team completes Setup + Foundational together
-2. Once Foundational is done:
+1. Team completes Setup + Foundational + Phase 2.7 Migration together
+2. Once Phase 2.7 is done:
    - Developer A: User Story 1 + 2 (Submission flow)
    - Developer B: User Story 3 + 4 (History + Dashboard)
    - Developer C: User Story 5 + 6 + 7 (Admin features)
@@ -341,17 +372,18 @@ With multiple developers:
 |-------|-------|------------------------|
 | Phase 1: Setup | 4 | 2 |
 | Phase 2: Foundational | 19 | 9 |
+| Phase 2.7: Migration | 7 | 3 |
 | Phase 3: US1 - Sandbox | 14 | 7 |
-| Phase 4: US2 - Submit | 7 | 1 |
+| Phase 4: US2 - Submit | 6 | 1 |
 | Phase 5: US3 - History | 8 | 4 |
 | Phase 6: US4 - Dashboard | 7 | 3 |
 | Phase 7: US5 - Rules | 4 | 2 |
 | Phase 8: US6 - Master | 7 | 3 |
 | Phase 9: US7 - Settings | 5 | 2 |
 | Phase 10: Polish | 6 | 2 |
-| **Total** | **81** | **35** |
+| **Total** | **87** | **38** |
 
-**MVP Scope**: Phase 1 + Phase 2 + Phase 3 = **37 tasks**
+**MVP Scope**: Phase 1 + Phase 2 + Phase 2.7 + Phase 3 = **44 tasks**
 
 ---
 
