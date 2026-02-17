@@ -117,20 +117,20 @@
 
 ### US1 の実装タスク
 
-- [ ] T023 [US1] src/features/submission/screens/SandboxScreen.jsx に SandboxScreen を作成（提出先ドロップダウン、残回数表示）
-- [ ] T023a [US1] SandboxScreen に AI スキップオプション UI を追加（タイムアウト/エラー時に「AI判定をスキップ」ボタンを表示）
-- [ ] T024 [P] [US1] src/features/submission/components/FileUploader.jsx に FileUploader コンポーネントを作成（ドラッグ&ドロップ、ファイルバリデーション）
-- [ ] T025 [P] [US1] src/features/submission/components/OrganizationSelect.jsx に OrganizationSelect コンポーネントを作成
-- [ ] T026 [P] [US1] src/features/submission/components/ProjectSelect.jsx に ProjectSelect コンポーネントを作成（団体でフィルタリング）
-- [ ] T027 [P] [US1] src/features/submission/components/MediaTypeSelect.jsx に MediaTypeSelect コンポーネントを作成
-- [ ] T028 [US1] src/features/submission/components/RiskScoreDisplay.jsx に RiskScoreDisplay コンポーネントを作成（0-100 スコア、色分け表示）
-- [ ] T029 [US1] src/features/submission/hooks/useOrganizations.js に useOrganizations フックを作成
-- [ ] T030 [US1] src/features/submission/hooks/useProjects.js に useProjects フックを作成
-- [ ] T031 [US1] src/features/submission/hooks/useMediaSpecs.js に useMediaSpecs フックを作成
-- [ ] T032 [US1] src/features/submission/hooks/useSandbox.js に useSandbox フックを作成（josenai_profiles.sandbox_count_today 管理）
-- [ ] T033 [US1] supabase/functions/sandbox/index.ts に sandbox Edge Function を作成（Gemini API 連携、30秒タイムアウト、タイムアウト/エラー時は skipped: true を返す）
-- [ ] T033a [US1] sandbox Edge Function にタイムアウト処理とフォールバックを追加（30秒タイムアウト、失敗時は skipped フラグ付き ai_risk_details を返す）
-- [ ] T034 [P] [US1] supabase/functions/_shared/geminiClient.ts に geminiClient を作成
+- [x] T023 [US1] src/features/submission/screens/SandboxScreen.jsx に SandboxScreen を作成（提出先ドロップダウン、残回数表示）
+- [x] T023a [US1] SandboxScreen に AI スキップオプション UI を追加（タイムアウト/エラー時に「AI判定をスキップ」ボタンを表示）
+- [x] T024 [P] [US1] src/features/submission/components/FileUploader.jsx に FileUploader コンポーネントを作成（ドラッグ&ドロップ、ファイルバリデーション）
+- [x] T025 [P] [US1] src/features/submission/components/OrganizationSelect.jsx に OrganizationSelect コンポーネントを作成
+- [x] T026 [P] [US1] src/features/submission/components/ProjectSelect.jsx に ProjectSelect コンポーネントを作成（団体でフィルタリング）
+- [x] T027 [P] [US1] src/features/submission/components/MediaTypeSelect.jsx に MediaTypeSelect コンポーネントを作成
+- [x] T028 [US1] src/features/submission/components/RiskScoreDisplay.jsx に RiskScoreDisplay コンポーネントを作成（0-100 スコア、色分け表示）
+- [x] T029 [US1] src/features/submission/hooks/useOrganizations.js に useOrganizations フックを作成
+- [x] T030 [US1] src/features/submission/hooks/useProjects.js に useProjects フックを作成
+- [x] T031 [US1] src/features/submission/hooks/useMediaSpecs.js に useMediaSpecs フックを作成
+- [x] T032 [US1] src/features/submission/hooks/useSandbox.js に useSandbox フックを作成（josenai_profiles.sandbox_count_today 管理）
+- [x] T033 [US1] supabase/functions/sandbox/index.ts に sandbox Edge Function を作成（Gemini API 連携、30秒タイムアウト、タイムアウト/エラー時は skipped: true を返す）
+- [x] T033a [US1] sandbox Edge Function にタイムアウト処理とフォールバックを追加（30秒タイムアウト、失敗時は skipped フラグ付き ai_risk_details を返す）
+- [x] T034 [P] [US1] supabase/functions/_shared/geminiClient.ts に geminiClient を作成
 
 **チェックポイント**: US1（サンドボックス）が独立して完全に動作・テスト可能であること
 
@@ -144,14 +144,14 @@
 
 ### US2 の実装タスク
 
-- [ ] T035 [US2] src/features/submission/screens/SubmitScreen.jsx に SubmitScreen を作成（リスクベースフロー: low/medium/high）
-- [ ] T037 [US2] src/features/submission/components/SubmissionConfirmModal.jsx に SubmissionConfirmModal コンポーネントを作成（中リスク時の警告）
-- [ ] T038 [US2] src/features/submission/components/HighRiskReasonInput.jsx に HighRiskReasonInput コンポーネントを作成（高リスク時の理由入力必須）
-- [ ] T039 [US2] src/features/submission/hooks/useSubmission.js に useSubmission フックを作成（josenai_submissions INSERT）
-- [ ] T040 [US2] supabase/functions/submit/index.ts に submit Edge Function を作成（Google Drive アップロード、josenai_submissions insert、自動承認ロジック組み込み、アップロード失敗時はロールバック）
-- [ ] T040a [US2] submit Edge Function に自動承認ロジック実装（josenai_app_settings から閾値取得、条件判定、status/reviewer_comment 更新）
-- [ ] T040b [US2] submit Edge Function のレスポンスに `auto_approved` フラグを追加（フロントエンドのトースト通知用）
-- [ ] T041 [P] [US2] supabase/functions/_shared/driveClient.ts に driveClient を作成（Google Drive API）
+- [x] T035 [US2] src/features/submission/screens/SubmitScreen.jsx に SubmitScreen を作成（リスクベースフロー: low/medium/high）
+- [x] T037 [US2] src/features/submission/components/SubmissionConfirmModal.jsx に SubmissionConfirmModal コンポーネントを作成（中リスク時の警告）
+- [x] T038 [US2] src/features/submission/components/HighRiskReasonInput.jsx に HighRiskReasonInput コンポーネントを作成（高リスク時の理由入力必須）
+- [x] T039 [US2] src/features/submission/hooks/useSubmission.js に useSubmission フックを作成（josenai_submissions INSERT）
+- [x] T040 [US2] supabase/functions/submit/index.ts に submit Edge Function を作成（Google Drive アップロード、josenai_submissions insert、自動承認ロジック組み込み、アップロード失敗時はロールバック）
+- [x] T040a [US2] submit Edge Function に自動承認ロジック実装（josenai_app_settings から閾値取得、条件判定、status/reviewer_comment 更新）
+- [x] T040b [US2] submit Edge Function のレスポンスに `auto_approved` フラグを追加（フロントエンドのトースト通知用）
+- [x] T041 [P] [US2] supabase/functions/_shared/driveClient.ts に driveClient を作成（Google Drive API）
 
 **チェックポイント**: US2（正式提出）が独立して完全に動作・テスト可能であること
 
