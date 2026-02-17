@@ -5,8 +5,12 @@
  * @module features/submission/components/SubmissionForm
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import OrganizationSelect from './OrganizationSelect';
+import ProjectSelect from './ProjectSelect';
+import MediaTypeSelect from './MediaTypeSelect';
+import FileUploader from './FileUploader';
 
 /**
  * @typedef {Object} SubmissionFormProps
@@ -21,17 +25,17 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
  * @property {string|null} organizationId - 選択された団体ID
  * @property {string|null} projectId - 選択された企画ID
  * @property {string|null} mediaType - 選択されたメディア種別
- * @property {string} submissionType - 提出種別 (kikaku | sns)
+ * @property {string} submissionType - 提出先 (kikaku | koho)
  * @property {File|null} file - アップロードファイル
  */
 
 /**
  * 提出フォーム
  * @description サンドボックスと正式提出で共通使用するフォーム
+ *              - 提出先選択（企画管理部/広報部）
  *              - 団体選択（OrganizationSelect）
  *              - 企画選択（ProjectSelect）
  *              - メディア種別選択（MediaTypeSelect）
- *              - 提出種別選択（企画物/SNS）
  *              - ファイルアップロード（FileUploader）
  * @param {SubmissionFormProps} props
  * @returns {React.ReactElement}
@@ -42,10 +46,6 @@ export default function SubmissionForm({
   disabled = false,
   submitLabel = '提出',
 }) {
-  /**
-   * フォームデータ状態
-   * @type {[FormData, Function]}
-   */
   const [formData, setFormData] = useState({
     organizationId: null,
     projectId: null,
@@ -54,27 +54,41 @@ export default function SubmissionForm({
     file: null,
   });
 
-  /**
-   * フォームフィールド更新
-   * @param {string} field - フィールド名
-   * @param {any} value - 値
-   */
+  /** FileUploader に渡す媒体規格 */
+  const [selectedSpec, setSelectedSpec] = useState(null);
+
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   /**
-   * 提出処理
+   * 団体変更ハンドラ（企画をリセット）
    */
+  const handleOrganizationChange = useCallback((orgId) => {
+    setFormData((prev) => ({
+      ...prev,
+      organizationId: orgId,
+      projectId: null,
+    }));
+  }, []);
+
+  /**
+   * 媒体種別変更ハンドラ（ファイルをリセット、spec を更新）
+   */
+  const handleMediaTypeChange = useCallback((mediaType, spec) => {
+    setFormData((prev) => ({
+      ...prev,
+      mediaType,
+      file: null,
+    }));
+    setSelectedSpec(spec);
+  }, []);
+
   const handleSubmit = () => {
     if (!isValid()) return;
     onSubmit?.(formData);
   };
 
-  /**
-   * バリデーション
-   * @returns {boolean} フォームが有効かどうか
-   */
   const isValid = () => {
     return (
       formData.organizationId &&
@@ -84,11 +98,13 @@ export default function SubmissionForm({
     );
   };
 
+  const isDisabled = loading || disabled;
+
   return (
     <View style={styles.container}>
-      {/* 提出種別選択 */}
+      {/* 提出先選択 */}
       <View style={styles.section}>
-        <Text style={styles.label}>提出種別</Text>
+        <Text style={styles.label}>提出先</Text>
         <View style={styles.radioGroup}>
           <TouchableOpacity
             style={[
@@ -96,7 +112,7 @@ export default function SubmissionForm({
               formData.submissionType === 'kikaku' && styles.radioSelected,
             ]}
             onPress={() => updateField('submissionType', 'kikaku')}
-            disabled={loading || disabled}
+            disabled={isDisabled}
           >
             <Text
               style={[
@@ -104,66 +120,79 @@ export default function SubmissionForm({
                 formData.submissionType === 'kikaku' && styles.radioTextSelected,
               ]}
             >
-              企画物
+              企画管理部
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.radioButton,
-              formData.submissionType === 'sns' && styles.radioSelected,
+              formData.submissionType === 'koho' && styles.radioSelected,
             ]}
-            onPress={() => updateField('submissionType', 'sns')}
-            disabled={loading || disabled}
+            onPress={() => updateField('submissionType', 'koho')}
+            disabled={isDisabled}
           >
             <Text
               style={[
                 styles.radioText,
-                formData.submissionType === 'sns' && styles.radioTextSelected,
+                formData.submissionType === 'koho' && styles.radioTextSelected,
               ]}
             >
-              SNS
+              広報部
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* プレースホルダー: 各Selectコンポーネントは後続タスクで実装 */}
+      {/* 団体選択 */}
       <View style={styles.section}>
         <Text style={styles.label}>団体</Text>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>OrganizationSelect (T025)</Text>
-        </View>
+        <OrganizationSelect
+          value={formData.organizationId}
+          onChange={handleOrganizationChange}
+          disabled={isDisabled}
+        />
       </View>
 
+      {/* 企画選択 */}
       <View style={styles.section}>
         <Text style={styles.label}>企画</Text>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>ProjectSelect (T026)</Text>
-        </View>
+        <ProjectSelect
+          value={formData.projectId}
+          onChange={(id) => updateField('projectId', id)}
+          organizationId={formData.organizationId}
+          disabled={isDisabled}
+        />
       </View>
 
+      {/* メディア種別 */}
       <View style={styles.section}>
-        <Text style={styles.label}>メディア種別</Text>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>MediaTypeSelect (T027)</Text>
-        </View>
+        <Text style={styles.label}>媒体種別</Text>
+        <MediaTypeSelect
+          value={formData.mediaType}
+          onChange={handleMediaTypeChange}
+          disabled={isDisabled}
+        />
       </View>
 
+      {/* ファイルアップロード */}
       <View style={styles.section}>
         <Text style={styles.label}>ファイル</Text>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>FileUploader (T024)</Text>
-        </View>
+        <FileUploader
+          value={formData.file}
+          onChange={(file) => updateField('file', file)}
+          selectedSpec={selectedSpec}
+          disabled={isDisabled}
+        />
       </View>
 
       {/* 提出ボタン */}
       <TouchableOpacity
         style={[
           styles.submitButton,
-          (!isValid() || loading || disabled) && styles.submitButtonDisabled,
+          (!isValid() || isDisabled) && styles.submitButtonDisabled,
         ]}
         onPress={handleSubmit}
-        disabled={!isValid() || loading || disabled}
+        disabled={!isValid() || isDisabled}
       >
         <Text style={styles.submitButtonText}>
           {loading ? '処理中...' : submitLabel}
@@ -210,20 +239,6 @@ const styles = StyleSheet.create({
   },
   radioTextSelected: {
     color: '#4dabf7',
-  },
-  placeholder: {
-    backgroundColor: '#2d2d44',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3d3d5c',
-    borderStyle: 'dashed',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    color: '#666666',
-    fontSize: 12,
-    fontStyle: 'italic',
   },
   submitButton: {
     backgroundColor: '#4dabf7',
