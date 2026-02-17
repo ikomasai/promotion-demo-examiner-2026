@@ -225,13 +225,13 @@
 
 ### US6 の実装タスク
 
-- [ ] T058 [US6] src/features/master/screens/MasterScreen.jsx に MasterScreen を作成
-- [ ] T059 [P] [US6] src/features/master/components/CsvImporter.jsx に CsvImporter コンポーネントを作成
-- [ ] T060 [P] [US6] src/features/master/components/OrganizationTable.jsx に OrganizationTable コンポーネントを作成
-- [ ] T061 [P] [US6] src/features/master/components/ProjectTable.jsx に ProjectTable コンポーネントを作成
-- [ ] T062 [US6] src/features/master/hooks/useCsvImport.js に useCsvImport フックを作成（multipart/form-data で Edge Functions にアップロード）
-- [ ] T063 [US6] supabase/functions/import-organizations/index.ts に import-organizations Edge Function を作成（CSV パース + josenai_organizations UPSERT）
-- [ ] T064 [US6] supabase/functions/import-projects/index.ts に import-projects Edge Function を作成（CSV パース + josenai_projects UPSERT）
+- [x] T058 [US6] src/features/master/screens/MasterScreen.jsx に MasterScreen を作成
+- [x] T059 [P] [US6] src/features/master/components/CsvImporter.jsx に CsvImporter コンポーネントを作成
+- [x] T060 [P] [US6] src/features/master/components/OrganizationTable.jsx に OrganizationTable コンポーネントを作成
+- [x] T061 [P] [US6] src/features/master/components/ProjectTable.jsx に ProjectTable コンポーネントを作成
+- [x] T062 [US6] src/features/master/hooks/useCsvImport.js に useCsvImport フックを作成（multipart/form-data で Edge Functions にアップロード）
+- [x] T063 [US6] supabase/functions/import-organizations/index.ts に import-organizations Edge Function を作成（CSV パース + josenai_organizations UPSERT）
+- [x] T064 [US6] supabase/functions/import-projects/index.ts に import-projects Edge Function を作成（CSV パース + josenai_projects UPSERT）
 
 **チェックポイント**: US6（マスタ管理）が独立して完全に動作・テスト可能であること
 
