@@ -165,15 +165,15 @@
 
 ### US3 の実装タスク
 
-- [ ] T042 [US3] src/features/submission/screens/HistoryScreen.jsx に HistoryScreen を作成
-- [ ] T043 [P] [US3] src/features/submission/components/SubmissionCard.jsx に SubmissionCard コンポーネントを作成
-- [ ] T044 [P] [US3] src/features/submission/components/SubmissionDetailModal.jsx に SubmissionDetailModal コンポーネントを作成
-- [ ] T045 [US3] src/features/submission/hooks/useSubmissionHistory.js に useSubmissionHistory フックを作成（josenai_submissions の RLS 付きクエリ）
-- [ ] T046 [US3] src/features/submission/components/StatusBadge.jsx に StatusBadge コンポーネントを作成（pending/approved/rejected）
-- [ ] T046a [US3] HistoryScreen に削除ボタンを追加（status='pending' の場合のみ表示）
-- [ ] T046b [US3] src/features/submission/components/DeleteConfirmModal.jsx に DeleteConfirmModal を作成
-- [ ] T046c [US3] src/features/submission/hooks/useSubmissionDelete.js に useSubmissionDelete フックを作成（josenai_submissions の物理削除 + Google Drive クリーンアップ）
-- [ ] T046d [US3] HistoryScreen に自動承認バッジを追加（reviewed_by = NULL かつ status = 'approved' の場合に「自動承認」ラベルを表示）
+- [x] T042 [US3] src/features/submission/screens/HistoryScreen.jsx に HistoryScreen を作成
+- [x] T043 [P] [US3] src/features/submission/components/SubmissionCard.jsx に SubmissionCard コンポーネントを作成
+- [x] T044 [P] [US3] src/features/submission/components/SubmissionDetailModal.jsx に SubmissionDetailModal コンポーネントを作成
+- [x] T045 [US3] src/features/submission/hooks/useSubmissionHistory.js に useSubmissionHistory フックを作成（josenai_submissions の RLS 付きクエリ）
+- [x] T046 [US3] src/features/submission/components/StatusBadge.jsx に StatusBadge コンポーネントを作成（pending/approved/rejected）
+- [x] T046a [US3] HistoryScreen に削除ボタンを追加（status='pending' の場合のみ表示）
+- [x] T046b [US3] src/features/submission/components/DeleteConfirmModal.jsx に DeleteConfirmModal を作成
+- [x] T046c [US3] src/features/submission/hooks/useSubmissionDelete.js に useSubmissionDelete フックを作成（josenai_submissions の物理削除 + Google Drive クリーンアップ）
+- [x] T046d [US3] HistoryScreen に自動承認バッジを追加（reviewed_by = NULL かつ status = 'approved' の場合に「自動承認」ラベルを表示）
 
 **チェックポイント**: US3（提出履歴）が独立して完全に動作・テスト可能であること
 
@@ -187,14 +187,14 @@
 
 ### US4 の実装タスク
 
-- [ ] T047 [US4] src/features/review/screens/DashboardScreen.jsx に DashboardScreen を作成（画面ベースロールフィルタリング、管理者用 submission_type タブ）
-- [ ] T048 [P] [US4] src/features/review/components/SubmissionTable.jsx に SubmissionTable コンポーネントを作成
-- [ ] T049 [P] [US4] src/features/review/components/ReviewModal.jsx に ReviewModal コンポーネントを作成（承認/却下、コメント付き）
-- [ ] T050 [P] [US4] src/features/review/components/DashboardFilters.jsx に DashboardFilters コンポーネントを作成（ステータス、団体、日付）
-- [ ] T051 [US4] src/features/review/hooks/useReviewSubmissions.js に useReviewSubmissions フックを作成（画面ベース RLS フィルタリング: koho/kikaku/admin）
-- [ ] T052 [US4] src/features/review/hooks/useReview.js に useReview フックを作成（josenai_submissions.version による楽観的ロック）
-- [ ] T053 [US4] supabase/functions/review/index.ts に review Edge Function を作成（josenai_submissions のステータス更新、バージョンチェック付き）
-- [ ] T053a [US4] DashboardScreen に自動承認フィルタ・インジケーターを追加（「自動承認のみ」「手動承認のみ」フィルタ、自動承認バッジ表示）
+- [x] T047 [US4] src/features/review/screens/DashboardScreen.jsx に DashboardScreen を作成（画面ベースロールフィルタリング、管理者用 submission_type タブ）
+- [x] T048 [P] [US4] src/features/review/components/SubmissionTable.jsx に SubmissionTable コンポーネントを作成
+- [x] T049 [P] [US4] src/features/review/components/ReviewModal.jsx に ReviewModal コンポーネントを作成（承認/却下、コメント付き）
+- [x] T050 [P] [US4] src/features/review/components/DashboardFilters.jsx に DashboardFilters コンポーネントを作成（ステータス、団体、日付）
+- [x] T051 [US4] src/features/review/hooks/useReviewSubmissions.js に useReviewSubmissions フックを作成（画面ベース RLS フィルタリング: koho/kikaku/admin）
+- [x] T052 [US4] src/features/review/hooks/useReview.js に useReview フックを作成（josenai_submissions.version による楽観的ロック）
+- [x] T053 [US4] supabase/functions/review/index.ts に review Edge Function を作成（josenai_submissions のステータス更新、バージョンチェック付き）
+- [x] T053a [US4] DashboardScreen に自動承認フィルタ・インジケーターを追加（「自動承認のみ」「手動承認のみ」フィルタ、自動承認バッジ表示）
 
 **チェックポイント**: US4（ダッシュボード）が独立して完全に動作・テスト可能であること
 
