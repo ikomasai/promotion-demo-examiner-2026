@@ -2,7 +2,7 @@
   "name": "promotion-demo-examiner-2026",
   "version": "1.0.0",
   "description": "生駒祭 情宣AI判定システム - Ikoma Festival Promotional Material AI Examination System",
-  "main": "App.jsx",
+  "main": "expo/AppEntry",
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
