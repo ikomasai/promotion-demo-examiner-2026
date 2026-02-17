@@ -64,7 +64,7 @@ function groupFlaggedItems(details) {
  *   onReset: () => void
  * }} props
  */
-export default function RiskScoreDisplay({ result, onReset }) {
+export default function RiskScoreDisplay({ result, onReset, actions }) {
   const { ai_risk_score, ai_risk_details, skipped, reason } = result;
   const { color, label } = getScoreStyle(ai_risk_score);
   const flaggedGroups = groupFlaggedItems(ai_risk_details);
@@ -126,10 +126,12 @@ export default function RiskScoreDisplay({ result, onReset }) {
         </Text>
       </View>
 
-      {/* リセットボタン */}
-      <TouchableOpacity style={styles.resetButton} onPress={onReset}>
-        <Text style={styles.resetButtonText}>もう一度試す</Text>
-      </TouchableOpacity>
+      {/* アクションエリア */}
+      {actions || (
+        <TouchableOpacity style={styles.resetButton} onPress={onReset}>
+          <Text style={styles.resetButtonText}>もう一度試す</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
