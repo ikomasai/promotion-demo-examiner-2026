@@ -1,60 +1,93 @@
 /**
- * @fileoverview 管理者コンテキスト - 管理者権限状態管理
- * @description 管理者パスワード認証と権限（koho/kikaku/super）の管理。
- *              Edge Function を通じた bcrypt 検証を使用。
+ * @fileoverview 管理者コンテキスト - セッションベースの管理者権限管理
+ * @description 管理者パスワード認証と画面アクセス権限の管理。
+ *              Edge Function を通じた bcrypt 検証を使用し、
+ *              認証成功時はクライアント側の React state に screen 権限を保持する。
+ *              DB への書き込みは行わない（共有 RBAC は RLS 側で制御）。
  * @module shared/contexts/AdminContext
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../../services/supabase/client';
-import { useAuth } from './AuthContext';
 
 /**
- * @typedef {'koho'|'kikaku'|'super'} AdminRole
- * @description 管理者権限種別
- * - koho: 広報部管理者（SNS提出のみ審査可能）
- * - kikaku: 企画管理部管理者（企画物のみ審査可能）
- * - super: スーパー管理者（全機能アクセス可能）
+ * @typedef {'koho'|'kikaku'|'super'} RoleType
+ * @description パスワード認証時に選択する権限種別
+ * - koho: 広報部（koho 提出の審査が可能）
+ * - kikaku: 企画管理部（kikaku 提出の審査が可能）
+ * - super: 管理者（全機能アクセス可能）
  */
 
 /**
+ * screen 識別子の定数
+ * @description 共有 RBAC の screen 名と一致させる
+ */
+const SCREENS = {
+  REVIEW_KOHO: 'josenai_review_koho',
+  REVIEW_KIKAKU: 'josenai_review_kikaku',
+  ADMIN: 'josenai_admin',
+};
+
+/**
+ * RoleType → 付与する screen のマッピング
+ * @type {Record<RoleType, string[]>}
+ */
+const ROLE_TO_SCREENS = {
+  koho: [SCREENS.REVIEW_KOHO],
+  kikaku: [SCREENS.REVIEW_KIKAKU],
+  super: [SCREENS.REVIEW_KOHO, SCREENS.REVIEW_KIKAKU, SCREENS.ADMIN],
+};
+
+/**
  * @typedef {Object} AdminContextValue
- * @property {AdminRole|null} adminRole - 現在の管理者権限
- * @property {boolean} isAdmin - 管理者かどうか
+ * @property {Set<string>} screens - 現在のセッションで有効な screen 権限セット
+ * @property {boolean} isKohoReviewer - 広報部審査権限があるか
+ * @property {boolean} isKikakuReviewer - 企画管理部審査権限があるか
+ * @property {boolean} isAdmin - 管理者権限があるか
+ * @property {boolean} isReviewer - いずれかの審査権限があるか
+ * @property {Function} hasScreen - 指定 screen へのアクセス権があるか判定
  * @property {boolean} verifying - 認証処理中フラグ
  * @property {string|null} error - エラーメッセージ
  * @property {Function} verifyPassword - パスワード検証
- * @property {Function} clearAdminRole - 管理者権限クリア
+ * @property {Function} clearScreens - 全 screen 権限をクリア（一般ユーザーに戻る）
  */
 
 const AdminContext = createContext(null);
 
 /**
  * 管理者プロバイダー
+ * @description パスワード認証成功時に React state で screen 権限を管理する。
+ *              DB への書き込みは行わず、ブラウザセッション中のみ有効。
  * @param {Object} props
  * @param {React.ReactNode} props.children
  */
 export function AdminProvider({ children }) {
-  const { profile, refreshProfile } = useAuth();
+  const [screens, setScreens] = useState(new Set());
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(null);
 
   /**
-   * 現在の管理者権限（profileから取得）
-   * @type {AdminRole|null}
+   * 指定 screen へのアクセス権があるか判定
+   * @param {string} screenName - screen 識別子
+   * @returns {boolean}
    */
-  const adminRole = profile?.admin_role || null;
+  const hasScreen = useCallback((screenName) => {
+    return screens.has(screenName);
+  }, [screens]);
 
   /**
-   * 管理者かどうか
-   * @type {boolean}
+   * 便利プロパティ: 各権限の判定
    */
-  const isAdmin = adminRole !== null;
+  const isKohoReviewer = useMemo(() => screens.has(SCREENS.REVIEW_KOHO), [screens]);
+  const isKikakuReviewer = useMemo(() => screens.has(SCREENS.REVIEW_KIKAKU), [screens]);
+  const isAdmin = useMemo(() => screens.has(SCREENS.ADMIN), [screens]);
+  const isReviewer = useMemo(() => isKohoReviewer || isKikakuReviewer || isAdmin, [isKohoReviewer, isKikakuReviewer, isAdmin]);
 
   /**
    * パスワード検証
-   * @description Edge Function を呼び出して bcrypt 検証を実行
-   * @param {AdminRole} role - 検証する権限種別
+   * @description Edge Function を呼び出して bcrypt 検証を実行。
+   *              成功時は対応する screen 権限を React state に追加する。
+   * @param {RoleType} role - 検証する権限種別
    * @param {string} password - 入力されたパスワード
    * @returns {Promise<boolean>} 検証成功かどうか
    */
@@ -82,20 +115,16 @@ export function AdminProvider({ children }) {
         return false;
       }
 
-      // 認証成功: profiles.admin_role を更新
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ admin_role: role })
-        .eq('id', profile.id);
-
-      if (updateError) {
-        setError('権限の更新に失敗しました。');
-        console.error('Profile 更新エラー:', updateError);
-        return false;
+      // 認証成功: 対応する screen 権限を state に追加
+      const newScreens = ROLE_TO_SCREENS[role];
+      if (newScreens) {
+        setScreens((prev) => {
+          const updated = new Set(prev);
+          newScreens.forEach((s) => updated.add(s));
+          return updated;
+        });
       }
 
-      // プロフィールを再取得して状態を更新
-      await refreshProfile();
       return true;
     } catch (err) {
       setError('認証処理中にエラーが発生しました。');
@@ -104,39 +133,29 @@ export function AdminProvider({ children }) {
     } finally {
       setVerifying(false);
     }
-  }, [profile, refreshProfile]);
+  }, []);
 
   /**
-   * 管理者権限クリア（一般ユーザーに戻る）
-   * @description ログアウトせずに管理者権限のみ解除
+   * 全 screen 権限をクリア（一般ユーザーに戻る）
+   * @description ログアウトせずに管理者権限のみ解除する。
+   *              DB への書き込みは不要（セッション state のみ）。
    */
-  const clearAdminRole = useCallback(async () => {
-    if (!profile) return;
-
-    try {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ admin_role: null })
-        .eq('id', profile.id);
-
-      if (updateError) {
-        console.error('権限クリアエラー:', updateError);
-        return;
-      }
-
-      await refreshProfile();
-    } catch (err) {
-      console.error('clearAdminRole 例外:', err);
-    }
-  }, [profile, refreshProfile]);
+  const clearScreens = useCallback(() => {
+    setScreens(new Set());
+    setError(null);
+  }, []);
 
   const value = {
-    adminRole,
+    screens,
+    hasScreen,
+    isKohoReviewer,
+    isKikakuReviewer,
     isAdmin,
+    isReviewer,
     verifying,
     error,
     verifyPassword,
-    clearAdminRole,
+    clearScreens,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
@@ -145,7 +164,7 @@ export function AdminProvider({ children }) {
 /**
  * 管理者コンテキストフック
  * @returns {AdminContextValue}
- * @throws {Error} AdminProvider外で使用した場合
+ * @throws {Error} AdminProvider 外で使用した場合
  */
 export function useAdmin() {
   const context = useContext(AdminContext);

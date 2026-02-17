@@ -2,6 +2,7 @@
  * @fileoverview カスタムドロワーコンテンツ - サイドバー表示
  * @description ダークテーマのサイドバーUI。
  *              ヘッダー（ユーザー情報）、ナビゲーション、フッター（ログアウト）を含む。
+ *              管理者権限は AdminContext の screen ベースで判定する。
  * @module navigation/components/CustomDrawerContent
  */
 
@@ -15,21 +16,19 @@ import { useAuth } from '../../shared/contexts/AuthContext';
 import { useAdmin } from '../../shared/contexts/AdminContext';
 
 /**
- * 管理者権限の日本語表示
- * @param {string|null} role - 権限種別
+ * 現在の screen 権限セットから日本語ラベルを取得
+ * @param {Object} adminState - AdminContext の権限状態
+ * @param {boolean} adminState.isAdmin - 管理者権限
+ * @param {boolean} adminState.isKohoReviewer - 広報部審査権限
+ * @param {boolean} adminState.isKikakuReviewer - 企画管理部審査権限
  * @returns {string} 日本語表示
  */
-function getRoleLabel(role) {
-  switch (role) {
-    case 'koho':
-      return '広報部管理者';
-    case 'kikaku':
-      return '企画管理部管理者';
-    case 'super':
-      return 'スーパー管理者';
-    default:
-      return '一般ユーザー';
-  }
+function getRoleLabel({ isAdmin, isKohoReviewer, isKikakuReviewer }) {
+  if (isAdmin) return '管理者';
+  if (isKohoReviewer && isKikakuReviewer) return '広報部 + 企画管理部';
+  if (isKohoReviewer) return '広報部';
+  if (isKikakuReviewer) return '企画管理部';
+  return '一般ユーザー';
 }
 
 /**
@@ -43,7 +42,7 @@ function getRoleLabel(role) {
  */
 export default function CustomDrawerContent(props) {
   const { user, profile, signOut } = useAuth();
-  const { adminRole, clearAdminRole } = useAdmin();
+  const { isAdmin, isKohoReviewer, isKikakuReviewer, isReviewer, clearScreens } = useAdmin();
 
   /**
    * ログアウト処理
@@ -55,8 +54,8 @@ export default function CustomDrawerContent(props) {
   /**
    * 管理者権限解除
    */
-  const handleClearAdmin = async () => {
-    await clearAdminRole();
+  const handleClearAdmin = () => {
+    clearScreens();
   };
 
   return (
@@ -64,11 +63,13 @@ export default function CustomDrawerContent(props) {
       {/* ヘッダー: ユーザー情報 */}
       <View style={styles.header}>
         <Text style={styles.userName}>
-          {profile?.display_name || user?.email?.split('@')[0] || 'ユーザー'}
+          {profile?.displayName || user?.email?.split('@')[0] || 'ユーザー'}
         </Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
         <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{getRoleLabel(adminRole)}</Text>
+          <Text style={styles.roleText}>
+            {getRoleLabel({ isAdmin, isKohoReviewer, isKikakuReviewer })}
+          </Text>
         </View>
       </View>
 
@@ -79,7 +80,7 @@ export default function CustomDrawerContent(props) {
 
       {/* フッター: ログアウト */}
       <View style={styles.footer}>
-        {adminRole && (
+        {isReviewer && (
           <TouchableOpacity style={styles.clearButton} onPress={handleClearAdmin}>
             <Text style={styles.clearButtonText}>管理者モード解除</Text>
           </TouchableOpacity>

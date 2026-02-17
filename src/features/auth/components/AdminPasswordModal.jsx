@@ -1,7 +1,8 @@
 /**
  * @fileoverview 管理者パスワードモーダル - 権限認証UI
  * @description 管理者パスワード入力用モーダル。
- *              3つの権限種別（koho/kikaku/super）から選択可能。
+ *              3つの権限種別（koho/kikaku/super）から選択し、
+ *              認証成功時にセッション内で screen 権限が付与される。
  * @module features/auth/components/AdminPasswordModal
  */
 
@@ -24,23 +25,25 @@ import { useAdmin } from '../../../shared/contexts/AdminContext';
 const ROLE_OPTIONS = [
   {
     value: 'koho',
-    label: '広報部管理者',
-    description: 'SNS提出の審査が可能',
+    label: '広報部',
+    description: '広報部宛（koho）提出の審査が可能',
   },
   {
     value: 'kikaku',
-    label: '企画管理部管理者',
-    description: '企画物の審査が可能',
+    label: '企画管理部',
+    description: '企画管理部宛（kikaku）提出の審査が可能',
   },
   {
     value: 'super',
-    label: 'スーパー管理者',
-    description: '全機能にアクセス可能',
+    label: '管理者',
+    description: '全機能にアクセス可能（設定・マスタ管理含む）',
   },
 ];
 
 /**
  * 管理者パスワードモーダル
+ * @description 権限種別を選択してパスワードを入力する認証モーダル。
+ *              認証成功時に AdminContext の screen 権限が更新される。
  * @param {Object} props
  * @param {boolean} props.visible - モーダル表示状態
  * @param {Function} props.onClose - 閉じる時のコールバック

@@ -87,22 +87,23 @@
 
 ### 2.7.1 データベースマイグレーション書き換え
 
-- [ ] T080 josenai_001_schema.sql を書き換え: profiles → user_profiles(参照) + josenai_profiles に分割、全テーブルを josenai_* プレフィックスにリネーム、submission_type CHECK を ('kikaku','koho') に変更、version/reviewed_by カラム追加
-- [ ] T081 [P] josenai_002_rls.sql を書き換え: admin_role チェックを fn_is_josenai_*() ヘルパー関数（koho/kikaku/admin/reviewer）に置換、画面ベース RBAC ポリシー追加
-- [ ] T082 [P] josenai_003_seed.sql を書き換え: 全テーブル名を josenai_* プレフィックスに更新
+- [x] T080 josenai_001_schema.sql を書き換え: profiles → user_profiles(参照) + josenai_profiles に分割、全テーブルを josenai_* プレフィックスにリネーム、submission_type CHECK を ('kikaku','koho') に変更、version/reviewed_by カラム追加
+- [x] T081 [P] josenai_002_rls.sql を書き換え: admin_role チェックを fn_is_josenai_*() ヘルパー関数（koho/kikaku/admin/reviewer）に置換、画面ベース RBAC ポリシー追加
+- [x] T082 [P] josenai_003_seed.sql を書き換え: 全テーブル名を josenai_* プレフィックスに更新
+- [x] T082a [P] josenai_003_seed.sql に `auto_approve_enabled`（デフォルト: false）と `auto_approve_threshold`（デフォルト: 10）の初期値を追加
 
 ### 2.7.2 コンテキスト更新
 
-- [ ] T083 AuthContext.jsx を更新: プロフィール取得を 'profiles' から user_profiles + josenai_profiles upsert フローに変更
-- [ ] T084 AdminContext.jsx を更新: admin_role カラムロジックを画面ベース権限状態（josenai_review_koho/kikaku/admin）に置換
+- [x] T083 AuthContext.jsx を更新: プロフィール取得を 'profiles' から user_profiles + josenai_profiles upsert フローに変更
+- [x] T084 AdminContext.jsx を更新: admin_role カラムロジックを画面ベース権限状態（josenai_review_koho/kikaku/admin）に置換
 
 ### 2.7.3 認証 UI 更新
 
-- [ ] T085 AdminPasswordModal.jsx を更新: ロールラベルを koho/kikaku/super から 広報部/企画管理部/管理者 に変更、画面識別子を更新
+- [x] T085 AdminPasswordModal.jsx を更新: ロールラベルを koho/kikaku/super から 広報部/企画管理部/管理者 に変更、画面識別子を更新
 
 ### 2.7.4 Supabase クライアント更新
 
-- [ ] T086 [P] src/services/supabase/client.js を更新: 共有プロジェクトの URL/キー互換性を確認
+- [x] T086 [P] src/services/supabase/client.js を更新: 共有プロジェクトの URL/キー互換性を確認
 
 **チェックポイント**: Phase 2 のコードが共有 Supabase 仕様と整合 — Phase 3 以降を開始可能
 
@@ -147,7 +148,9 @@
 - [ ] T037 [US2] src/features/submission/components/SubmissionConfirmModal.jsx に SubmissionConfirmModal コンポーネントを作成（中リスク時の警告）
 - [ ] T038 [US2] src/features/submission/components/HighRiskReasonInput.jsx に HighRiskReasonInput コンポーネントを作成（高リスク時の理由入力必須）
 - [ ] T039 [US2] src/features/submission/hooks/useSubmission.js に useSubmission フックを作成（josenai_submissions INSERT）
-- [ ] T040 [US2] supabase/functions/submit/index.ts に submit Edge Function を作成（Google Drive アップロード、josenai_submissions insert、アップロード失敗時はロールバック）
+- [ ] T040 [US2] supabase/functions/submit/index.ts に submit Edge Function を作成（Google Drive アップロード、josenai_submissions insert、自動承認ロジック組み込み、アップロード失敗時はロールバック）
+- [ ] T040a [US2] submit Edge Function に自動承認ロジック実装（josenai_app_settings から閾値取得、条件判定、status/reviewer_comment 更新）
+- [ ] T040b [US2] submit Edge Function のレスポンスに `auto_approved` フラグを追加（フロントエンドのトースト通知用）
 - [ ] T041 [P] [US2] supabase/functions/_shared/driveClient.ts に driveClient を作成（Google Drive API）
 
 **チェックポイント**: US2（正式提出）が独立して完全に動作・テスト可能であること
@@ -170,6 +173,7 @@
 - [ ] T046a [US3] HistoryScreen に削除ボタンを追加（status='pending' の場合のみ表示）
 - [ ] T046b [US3] src/features/submission/components/DeleteConfirmModal.jsx に DeleteConfirmModal を作成
 - [ ] T046c [US3] src/features/submission/hooks/useSubmissionDelete.js に useSubmissionDelete フックを作成（josenai_submissions の物理削除 + Google Drive クリーンアップ）
+- [ ] T046d [US3] HistoryScreen に自動承認バッジを追加（reviewed_by = NULL かつ status = 'approved' の場合に「自動承認」ラベルを表示）
 
 **チェックポイント**: US3（提出履歴）が独立して完全に動作・テスト可能であること
 
@@ -190,6 +194,7 @@
 - [ ] T051 [US4] src/features/review/hooks/useReviewSubmissions.js に useReviewSubmissions フックを作成（画面ベース RLS フィルタリング: koho/kikaku/admin）
 - [ ] T052 [US4] src/features/review/hooks/useReview.js に useReview フックを作成（josenai_submissions.version による楽観的ロック）
 - [ ] T053 [US4] supabase/functions/review/index.ts に review Edge Function を作成（josenai_submissions のステータス更新、バージョンチェック付き）
+- [ ] T053a [US4] DashboardScreen に自動承認フィルタ・インジケーターを追加（「自動承認のみ」「手動承認のみ」フィルタ、自動承認バッジ表示）
 
 **チェックポイント**: US4（ダッシュボード）が独立して完全に動作・テスト可能であること
 
@@ -240,7 +245,9 @@
 
 ### US7 の実装タスク
 
-- [ ] T065 [US7] src/features/settings/screens/SettingsScreen.jsx に SettingsScreen を作成（josenai_app_settings 管理）
+- [ ] T065 [US7] src/features/settings/screens/SettingsScreen.jsx に SettingsScreen を作成（josenai_app_settings 管理、自動承認設定セクション含む）
+- [ ] T065a [US7] SettingsScreen に自動承認設定 UI を実装（トグル、閾値入力、警告パネル）
+- [ ] T065b [US7] src/features/settings/components/AutoApproveWarningModal.jsx に AutoApproveWarningModal を作成（免責確認モーダル、有効化時に表示）
 - [ ] T066 [P] [US7] src/features/settings/components/SettingItem.jsx に SettingItem コンポーネントを作成
 - [ ] T067 [P] [US7] src/features/settings/components/PasswordChangeModal.jsx に PasswordChangeModal コンポーネントを作成
 - [ ] T068 [US7] src/features/settings/hooks/useAppSettings.js に useAppSettings フックを作成（josenai_app_settings CRUD）
@@ -372,18 +379,18 @@
 |----------|----------|----------------|
 | Phase 1: セットアップ | 4 | 2 |
 | Phase 2: 基盤構築 | 19 | 9 |
-| Phase 2.7: 移行 | 7 | 3 |
+| Phase 2.7: 移行 | 8 | 4 |
 | Phase 3: US1 - サンドボックス | 14 | 7 |
-| Phase 4: US2 - 正式提出 | 6 | 1 |
-| Phase 5: US3 - 提出履歴 | 8 | 4 |
-| Phase 6: US4 - ダッシュボード | 7 | 3 |
+| Phase 4: US2 - 正式提出 | 8 | 1 |
+| Phase 5: US3 - 提出履歴 | 9 | 4 |
+| Phase 6: US4 - ダッシュボード | 8 | 3 |
 | Phase 7: US5 - ルール管理 | 4 | 2 |
 | Phase 8: US6 - マスタ管理 | 7 | 3 |
-| Phase 9: US7 - 設定 | 5 | 2 |
+| Phase 9: US7 - 設定 | 7 | 2 |
 | Phase 10: 仕上げ | 6 | 2 |
-| **合計** | **87** | **38** |
+| **合計** | **94** | **38** |
 
-**MVP スコープ**: Phase 1 + Phase 2 + Phase 2.7 + Phase 3 = **44 タスク**
+**MVP スコープ**: Phase 1 + Phase 2 + Phase 2.7 + Phase 3 = **45 タスク**
 
 ---
 

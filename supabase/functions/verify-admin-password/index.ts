@@ -1,7 +1,7 @@
 /**
  * @fileoverview 管理者パスワード検証 Edge Function
  * @description bcrypt を使用して管理者パスワードを検証。
- *              app_settings テーブルからハッシュを取得して比較。
+ *              josenai_app_settings テーブルからハッシュを取得して比較。
  * @module supabase/functions/verify-admin-password
  */
 
@@ -79,9 +79,9 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // app_settings からパスワードハッシュを取得
+    // josenai_app_settings からパスワードハッシュを取得
     const { data: setting, error: fetchError } = await supabaseAdmin
-      .from('app_settings')
+      .from('josenai_app_settings')
       .select('value')
       .eq('key', PASSWORD_KEYS[role])
       .single();

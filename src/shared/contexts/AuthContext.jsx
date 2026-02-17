@@ -1,7 +1,8 @@
 /**
  * @fileoverview 認証コンテキスト - Google OAuth 認証状態管理
  * @description Supabase Auth を使用した Google OAuth 認証を管理。
- *              @kindai.ac.jp ドメイン制限、プロフィール自動取得を提供。
+ *              @kindai.ac.jp ドメイン制限。
+ *              初回ログイン時に user_profiles（共有）と josenai_profiles（情宣固有）を upsert。
  * @module shared/contexts/AuthContext
  */
 
@@ -12,9 +13,18 @@ import { supabase } from '../../services/supabase/client';
 const ALLOWED_DOMAIN = '@kindai.ac.jp';
 
 /**
+ * @typedef {Object} Profile
+ * @property {string} id - auth.users の user ID
+ * @property {string} email - メールアドレス（auth.users から取得）
+ * @property {string|null} displayName - 表示名（user_profiles.name）
+ * @property {number} sandboxCountToday - 本日のサンドボックス使用回数
+ * @property {string|null} sandboxCountDate - サンドボックスカウント日付
+ */
+
+/**
  * @typedef {Object} AuthContextValue
  * @property {Object|null} user - Supabase Auth ユーザー
- * @property {Object|null} profile - profiles テーブルのデータ
+ * @property {Profile|null} profile - 統合プロフィールデータ
  * @property {boolean} loading - 読み込み中フラグ
  * @property {string|null} error - エラーメッセージ
  * @property {Function} signIn - ログイン開始
@@ -26,6 +36,7 @@ const AuthContext = createContext(null);
 
 /**
  * 認証プロバイダー
+ * @description Google OAuth 認証を管理し、ログイン時に共有・情宣固有プロフィールを upsert する。
  * @param {Object} props
  * @param {React.ReactNode} props.children
  */
@@ -36,37 +47,71 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   /**
-   * プロフィール取得
-   * @param {string} userId
-   * @returns {Promise<Object|null>}
+   * プロフィール取得または作成
+   * @description user_profiles（共有）と josenai_profiles（情宣固有）に upsert し、
+   *              統合プロフィールオブジェクトを返す。
+   * @param {Object} authUser - Supabase Auth ユーザーオブジェクト
+   * @returns {Promise<Profile|null>} 統合プロフィール
    */
-  const fetchProfile = useCallback(async (userId) => {
+  const fetchOrCreateProfile = useCallback(async (authUser) => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
+      const displayName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '';
+
+      // 1. user_profiles（共有テーブル）に upsert
+      const { error: userProfileError } = await supabase
+        .from('user_profiles')
+        .upsert(
+          {
+            user_id: authUser.id,
+            name: displayName,
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (userProfileError) {
+        console.error('user_profiles upsert エラー:', userProfileError);
+      }
+
+      // 2. josenai_profiles（情宣固有テーブル）に upsert
+      const { data: josenaiProfile, error: josenaiError } = await supabase
+        .from('josenai_profiles')
+        .upsert(
+          {
+            user_id: authUser.id,
+            sandbox_count_today: 0,
+          },
+          { onConflict: 'user_id', ignoreDuplicates: true }
+        )
+        .select('sandbox_count_today, sandbox_count_date')
         .single();
 
-      if (fetchError) {
-        console.error('プロフィール取得エラー:', fetchError);
-        return null;
+      if (josenaiError) {
+        console.error('josenai_profiles upsert エラー:', josenaiError);
       }
-      return data;
+
+      // 3. 統合プロフィールを構築
+      return {
+        id: authUser.id,
+        email: authUser.email,
+        displayName,
+        sandboxCountToday: josenaiProfile?.sandbox_count_today ?? 0,
+        sandboxCountDate: josenaiProfile?.sandbox_count_date ?? null,
+      };
     } catch (err) {
-      console.error('プロフィール取得例外:', err);
+      console.error('プロフィール取得/作成例外:', err);
       return null;
     }
   }, []);
 
   /**
-   * プロフィール再取得（管理者権限変更後などに使用）
+   * プロフィール再取得
+   * @description サンドボックス使用後など、最新データが必要な場合に呼び出す。
    */
   const refreshProfile = useCallback(async () => {
     if (!user) return;
-    const freshProfile = await fetchProfile(user.id);
+    const freshProfile = await fetchOrCreateProfile(user);
     setProfile(freshProfile);
-  }, [user, fetchProfile]);
+  }, [user, fetchOrCreateProfile]);
 
   /**
    * ドメイン検証
@@ -140,7 +185,7 @@ export function AuthProvider({ children }) {
 
           if (mounted) {
             setUser(session.user);
-            const userProfile = await fetchProfile(session.user.id);
+            const userProfile = await fetchOrCreateProfile(session.user);
             setProfile(userProfile);
           }
         }
@@ -165,7 +210,7 @@ export function AuthProvider({ children }) {
           }
           setUser(session.user);
           setError(null);
-          const userProfile = await fetchProfile(session.user.id);
+          const userProfile = await fetchOrCreateProfile(session.user);
           setProfile(userProfile);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -178,7 +223,7 @@ export function AuthProvider({ children }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchOrCreateProfile]);
 
   const value = { user, profile, loading, error, signIn, signOut, refreshProfile };
 
@@ -188,7 +233,7 @@ export function AuthProvider({ children }) {
 /**
  * 認証コンテキストフック
  * @returns {AuthContextValue}
- * @throws {Error} AuthProvider外で使用した場合
+ * @throws {Error} AuthProvider 外で使用した場合
  */
 export function useAuth() {
   const context = useContext(AuthContext);

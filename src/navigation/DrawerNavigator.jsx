@@ -1,7 +1,7 @@
 /**
  * @fileoverview ドロワーナビゲーター - サイドバー付きナビゲーション
  * @description 7画面を管理するドロワーナビゲーション。
- *              管理者権限に応じてメニュー項目の表示/非表示を制御。
+ *              AdminContext の screen 権限に応じてメニュー項目の表示/非表示を制御。
  * @module navigation/DrawerNavigator
  */
 
@@ -39,20 +39,15 @@ function withErrorBoundary(Component) {
 
 /**
  * ドロワーナビゲーター
- * @description 認証済みユーザー向けのメインナビゲーション
+ * @description 認証済みユーザー向けのメインナビゲーション。
+ *              screen 権限に応じてメニュー表示を制御:
  *              - 一般ユーザー: サンドボックス, 提出, 履歴
- *              - koho/kikaku: + ダッシュボード, ルール, 設定
- *              - super: + マスタ管理
+ *              - 審査権限保持者（koho/kikaku/admin）: + ダッシュボード, ルール, 設定
+ *              - 管理者（admin）: + マスタ管理
  * @returns {React.ReactElement}
  */
 export default function DrawerNavigator() {
-  const { adminRole, isAdmin } = useAdmin();
-
-  /**
-   * マスタ管理画面の表示権限（superのみ）
-   * @type {boolean}
-   */
-  const canAccessMaster = adminRole === 'super';
+  const { isAdmin, isReviewer } = useAdmin();
 
   return (
     <Drawer.Navigator
@@ -104,8 +99,8 @@ export default function DrawerNavigator() {
         }}
       />
 
-      {/* 管理者向け画面 */}
-      {isAdmin && (
+      {/* 審査権限保持者向け画面 */}
+      {isReviewer && (
         <>
           <Drawer.Screen
             name="ダッシュボード"
@@ -123,7 +118,7 @@ export default function DrawerNavigator() {
               drawerLabel: 'ルール管理',
             }}
           />
-          {canAccessMaster && (
+          {isAdmin && (
             <Drawer.Screen
               name="マスタ"
               component={withErrorBoundary(MasterScreen)}

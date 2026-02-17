@@ -1,16 +1,19 @@
 -- ============================================================
--- 003_seed_data.sql
+-- josenai_003_seed.sql
 -- 生駒祭 情宣AI判定システム - 初期データ投入
 -- ============================================================
 -- 作成日: 2026-01-25
+-- 更新日: 2026-02-17 (共有Supabase移行: josenai_ プレフィックス追加,
+--                     自動承認設定追加)
 -- 説明: マスタデータの初期値
---       media_specs, check_items, rule_documents, app_settings
+--       josenai_media_specs, josenai_check_items,
+--       josenai_rule_documents, josenai_app_settings
 -- ============================================================
 
 -- ------------------------------------------------------------
--- media_specs: メディア規格マスタ
+-- josenai_media_specs: メディア規格マスタ
 -- ------------------------------------------------------------
-INSERT INTO media_specs (media_type, display_name, allowed_extensions, max_file_size_mb) VALUES
+INSERT INTO josenai_media_specs (media_type, display_name, allowed_extensions, max_file_size_mb) VALUES
     ('poster_a1', 'ポスター（A1）', ARRAY['jpg', 'jpeg', 'png', 'pdf'], 50),
     ('poster_a2', 'ポスター（A2）', ARRAY['jpg', 'jpeg', 'png', 'pdf'], 30),
     ('poster_a3', 'ポスター（A3）', ARRAY['jpg', 'jpeg', 'png', 'pdf'], 20),
@@ -21,12 +24,12 @@ INSERT INTO media_specs (media_type, display_name, allowed_extensions, max_file_
     ('other', 'その他', ARRAY['jpg', 'jpeg', 'png', 'pdf', 'mp4'], 50);
 
 -- ------------------------------------------------------------
--- check_items: AI判定チェック項目
+-- josenai_check_items: AI判定チェック項目
 -- カテゴリ別リスク重み: prohibited=30, copyright=15, format=5
 -- ------------------------------------------------------------
 
 -- 禁止事項（リスク重み: 30）
-INSERT INTO check_items (category, item_code, item_name, description, risk_weight, display_order) VALUES
+INSERT INTO josenai_check_items (category, item_code, item_name, description, risk_weight, display_order) VALUES
     ('prohibited', 'PRH001', '反社会的表現', '暴力、差別、ヘイトスピーチ等の表現が含まれていないか', 30, 1),
     ('prohibited', 'PRH002', '法令違反', '法律に抵触する可能性のある表現がないか', 30, 2),
     ('prohibited', 'PRH003', '公序良俗違反', '公序良俗に反する表現がないか', 30, 3),
@@ -37,7 +40,7 @@ INSERT INTO check_items (category, item_code, item_name, description, risk_weigh
     ('prohibited', 'PRH008', '政治的主張', '特定の政治的立場を支持する表現がないか', 30, 8);
 
 -- 著作権関連（リスク重み: 15）
-INSERT INTO check_items (category, item_code, item_name, description, risk_weight, display_order) VALUES
+INSERT INTO josenai_check_items (category, item_code, item_name, description, risk_weight, display_order) VALUES
     ('copyright', 'CPR001', '画像著作権', '使用している画像の著作権は適切に処理されているか', 15, 1),
     ('copyright', 'CPR002', 'フォント著作権', '商用利用可能なフォントを使用しているか', 15, 2),
     ('copyright', 'CPR003', '音楽著作権', '動画に使用している音楽の著作権は適切か', 15, 3),
@@ -46,7 +49,7 @@ INSERT INTO check_items (category, item_code, item_name, description, risk_weigh
     ('copyright', 'CPR006', '二次創作', '二次創作物の場合、ガイドラインに準拠しているか', 15, 6);
 
 -- フォーマット関連（リスク重み: 5）
-INSERT INTO check_items (category, item_code, item_name, description, risk_weight, display_order) VALUES
+INSERT INTO josenai_check_items (category, item_code, item_name, description, risk_weight, display_order) VALUES
     ('format', 'FMT001', '必須情報記載', '日時・場所・団体名等の必須情報が記載されているか', 5, 1),
     ('format', 'FMT002', '大学祭ロゴ', '生駒祭公式ロゴが適切に配置されているか', 5, 2),
     ('format', 'FMT003', '文字可読性', '文字サイズ・色が適切で読みやすいか', 5, 3),
@@ -54,9 +57,9 @@ INSERT INTO check_items (category, item_code, item_name, description, risk_weigh
     ('format', 'FMT005', 'ファイル形式', '指定されたファイル形式・サイズを満たしているか', 5, 5);
 
 -- ------------------------------------------------------------
--- rule_documents: ルール文書
+-- josenai_rule_documents: ルール文書
 -- ------------------------------------------------------------
-INSERT INTO rule_documents (document_type, title, content, version) VALUES
+INSERT INTO josenai_rule_documents (document_type, title, content, version) VALUES
     ('josenai_rule', '情宣ルール', '# 生駒祭 2026 情宣ルール
 
 ## 1. 基本方針
@@ -122,32 +125,34 @@ INSERT INTO rule_documents (document_type, title, content, version) VALUES
 ', 1);
 
 -- ------------------------------------------------------------
--- app_settings: アプリケーション設定
+-- josenai_app_settings: アプリケーション設定
 -- パスワードは bcrypt ハッシュ（デフォルト: admin123）
 -- ------------------------------------------------------------
-INSERT INTO app_settings (key, value, description) VALUES
+INSERT INTO josenai_app_settings (key, value, description) VALUES
     ('koho_admin_password_hash', '$2b$10$rOvHPxfzO2yPMfGqPvXvYOJHKjHVXJKqQnKpGqWvVpXJKqQnKpGq', '広報部管理者パスワード（bcrypt）'),
     ('kikaku_admin_password_hash', '$2b$10$rOvHPxfzO2yPMfGqPvXvYOJHKjHVXJKqQnKpGqWvVpXJKqQnKpGq', '企画管理部管理者パスワード（bcrypt）'),
     ('super_admin_password_hash', '$2b$10$rOvHPxfzO2yPMfGqPvXvYOJHKjHVXJKqQnKpGqWvVpXJKqQnKpGq', 'スーパー管理者パスワード（bcrypt）'),
     ('sandbox_daily_limit', '3', 'サンドボックス1日上限回数'),
     ('submission_enabled', 'true', '提出受付中フラグ'),
     ('ai_timeout_seconds', '30', 'AI判定タイムアウト秒数'),
-    ('app_version', '1.0.0', 'アプリケーションバージョン');
+    ('app_version', '1.0.0', 'アプリケーションバージョン'),
+    ('auto_approve_enabled', 'false', '自動承認機能の有効/無効'),
+    ('auto_approve_threshold', '10', '自動承認閾値（0-100）');
 
 -- ------------------------------------------------------------
 -- サンプル団体・企画データ（開発用）
 -- ------------------------------------------------------------
-INSERT INTO organizations (organization_code, organization_name, category) VALUES
+INSERT INTO josenai_organizations (organization_code, organization_name, category) VALUES
     ('ORG001', '文化会演劇部', '文化会'),
     ('ORG002', '軽音楽部', '文化会'),
     ('ORG003', '写真部', '文化会'),
     ('ORG004', 'サッカー部', '体育会'),
     ('ORG005', '生駒祭実行委員会', '実行委員会');
 
-INSERT INTO projects (project_code, project_name, organization_id) VALUES
-    ('PRJ001', '秋公演「夢の続き」', (SELECT id FROM organizations WHERE organization_code = 'ORG001')),
-    ('PRJ002', 'ライブステージ', (SELECT id FROM organizations WHERE organization_code = 'ORG002')),
-    ('PRJ003', '写真展「光と影」', (SELECT id FROM organizations WHERE organization_code = 'ORG003')),
-    ('PRJ004', 'フットサル大会', (SELECT id FROM organizations WHERE organization_code = 'ORG004')),
-    ('PRJ005', 'オープニングセレモニー', (SELECT id FROM organizations WHERE organization_code = 'ORG005')),
-    ('PRJ006', 'グランドフィナーレ', (SELECT id FROM organizations WHERE organization_code = 'ORG005'));
+INSERT INTO josenai_projects (project_code, project_name, organization_id) VALUES
+    ('PRJ001', '秋公演「夢の続き」', (SELECT id FROM josenai_organizations WHERE organization_code = 'ORG001')),
+    ('PRJ002', 'ライブステージ', (SELECT id FROM josenai_organizations WHERE organization_code = 'ORG002')),
+    ('PRJ003', '写真展「光と影」', (SELECT id FROM josenai_organizations WHERE organization_code = 'ORG003')),
+    ('PRJ004', 'フットサル大会', (SELECT id FROM josenai_organizations WHERE organization_code = 'ORG004')),
+    ('PRJ005', 'オープニングセレモニー', (SELECT id FROM josenai_organizations WHERE organization_code = 'ORG005')),
+    ('PRJ006', 'グランドフィナーレ', (SELECT id FROM josenai_organizations WHERE organization_code = 'ORG005'));
