@@ -208,10 +208,10 @@
 
 ### US5 の実装タスク
 
-- [ ] T054 [US5] src/features/rules/screens/RuleListScreen.jsx に RuleListScreen を作成
-- [ ] T055 [P] [US5] src/features/rules/components/RuleDocumentCard.jsx に RuleDocumentCard コンポーネントを作成
-- [ ] T056 [P] [US5] src/features/rules/components/RuleEditModal.jsx に RuleEditModal コンポーネントを作成（Markdown エディタ）
-- [ ] T057 [US5] src/features/rules/hooks/useRuleDocuments.js に useRuleDocuments フックを作成（josenai_rule_documents CRUD）
+- [x] T054 [US5] src/features/rules/screens/RuleListScreen.jsx に RuleListScreen を作成
+- [x] T055 [P] [US5] src/features/rules/components/RuleDocumentCard.jsx に RuleDocumentCard コンポーネントを作成
+- [x] T056 [P] [US5] src/features/rules/components/RuleEditModal.jsx に RuleEditModal コンポーネントを作成（Markdown エディタ）
+- [x] T057 [US5] src/features/rules/hooks/useRuleDocuments.js に useRuleDocuments フックを作成（josenai_rule_documents CRUD）
 
 **チェックポイント**: US5（ルール管理）が独立して完全に動作・テスト可能であること
 
