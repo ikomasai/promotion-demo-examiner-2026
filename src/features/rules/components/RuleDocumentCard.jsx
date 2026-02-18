@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SimpleMarkdown from './SimpleMarkdown';
 
 /**
@@ -37,11 +38,12 @@ function formatDate(isoString) {
  *   canEdit: boolean
  * }} props
  */
-export default function RuleDocumentCard({ document, onEdit, canEdit }) {
+export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit }) {
+  const { isMobile } = useResponsive();
   const typeConfig = TYPE_CONFIG[document.document_type] || TYPE_CONFIG.josenai_rule;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isMobile && styles.cardMobile]}>
       {/* ヘッダー: バッジ + バージョン */}
       <View style={styles.headerRow}>
         <View style={[styles.badge, { backgroundColor: typeConfig.bg }]}>
@@ -80,7 +82,7 @@ export default function RuleDocumentCard({ document, onEdit, canEdit }) {
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -89,6 +91,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 12,
+  },
+  cardMobile: {
+    padding: 12,
+    marginHorizontal: 8,
   },
   headerRow: {
     flexDirection: 'row',

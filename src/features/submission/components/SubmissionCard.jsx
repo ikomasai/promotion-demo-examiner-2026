@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import StatusBadge from './StatusBadge';
 
 /** submission_type の表示ラベル */
@@ -66,7 +67,8 @@ function isAutoApproved(submission) {
  *   onDelete: (submission: Object) => void
  * }} props
  */
-export default function SubmissionCard({ submission, onPress, onDelete }) {
+export default React.memo(function SubmissionCard({ submission, onPress, onDelete }) {
+  const { isMobile } = useResponsive();
   const orgName = submission.organization?.organization_name || '不明';
   const projName = submission.project?.project_name || '不明';
   const canDelete = submission.status === 'pending';
@@ -74,7 +76,7 @@ export default function SubmissionCard({ submission, onPress, onDelete }) {
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, isMobile && styles.cardMobile]}
       onPress={() => onPress(submission)}
       activeOpacity={0.7}
     >
@@ -139,7 +141,7 @@ export default function SubmissionCard({ submission, onPress, onDelete }) {
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -148,6 +150,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 12,
+  },
+  cardMobile: {
+    padding: 12,
+    marginHorizontal: 8,
   },
   badgeRow: {
     flexDirection: 'row',

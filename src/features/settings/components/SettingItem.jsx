@@ -30,7 +30,7 @@ import {
  * @param {number} [props.max] - 最大値（number type）
  * @param {string} [props.buttonLabel] - ボタンラベル（button type）
  */
-export default function SettingItem({
+export default React.memo(function SettingItem({
   type,
   label,
   description,
@@ -142,7 +142,7 @@ export default function SettingItem({
       </View>
     </View>
   );
-}
+})
 
 const styles = StyleSheet.create({
   container: {

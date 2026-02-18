@@ -17,7 +17,7 @@ const STATUS_MAP = {
  * ステータスバッジ
  * @param {{ status: 'pending'|'approved'|'rejected' }} props
  */
-export default function StatusBadge({ status }) {
+export default React.memo(function StatusBadge({ status }) {
   const config = STATUS_MAP[status] || STATUS_MAP.pending;
 
   return (
@@ -27,7 +27,7 @@ export default function StatusBadge({ status }) {
       </Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   badge: {
