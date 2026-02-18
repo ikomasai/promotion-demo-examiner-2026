@@ -245,13 +245,13 @@
 
 ### US7 の実装タスク
 
-- [ ] T065 [US7] src/features/settings/screens/SettingsScreen.jsx に SettingsScreen を作成（josenai_app_settings 管理、自動承認設定セクション含む）
-- [ ] T065a [US7] SettingsScreen に自動承認設定 UI を実装（トグル、閾値入力、警告パネル）
-- [ ] T065b [US7] src/features/settings/components/AutoApproveWarningModal.jsx に AutoApproveWarningModal を作成（免責確認モーダル、有効化時に表示）
-- [ ] T066 [P] [US7] src/features/settings/components/SettingItem.jsx に SettingItem コンポーネントを作成
-- [ ] T067 [P] [US7] src/features/settings/components/PasswordChangeModal.jsx に PasswordChangeModal コンポーネントを作成
-- [ ] T068 [US7] src/features/settings/hooks/useAppSettings.js に useAppSettings フックを作成（josenai_app_settings CRUD）
-- [ ] T069 [US7] supabase/functions/update-password/index.ts に update-password Edge Function を作成（bcrypt ハッシュ生成）
+- [X] T065 [US7] src/features/settings/screens/SettingsScreen.jsx に SettingsScreen を作成（josenai_app_settings 管理、自動承認設定セクション含む）
+- [X] T065a [US7] SettingsScreen に自動承認設定 UI を実装（トグル、閾値入力、警告パネル）
+- [X] T065b [US7] src/features/settings/components/AutoApproveWarningModal.jsx に AutoApproveWarningModal を作成（免責確認モーダル、有効化時に表示）
+- [X] T066 [P] [US7] src/features/settings/components/SettingItem.jsx に SettingItem コンポーネントを作成
+- [X] T067 [P] [US7] src/features/settings/components/PasswordChangeModal.jsx に PasswordChangeModal コンポーネントを作成
+- [X] T068 [US7] src/features/settings/hooks/useAppSettings.js に useAppSettings フックを作成（josenai_app_settings CRUD）
+- [X] T069 [US7] supabase/functions/update-password/index.ts に update-password Edge Function を作成（bcrypt ハッシュ生成）
 
 **チェックポイント**: US7（設定）が独立して完全に動作・テスト可能であること
 
@@ -261,12 +261,12 @@
 
 **目的**: 複数のユーザーストーリーにまたがる改善
 
-- [ ] T070 [P] 全画面にモバイル向けレスポンシブスタイルを追加（< 768px）
-- [ ] T071 [P] Edge Functions にエラーハンドリングとリトライロジックを実装
-- [ ] T072 .github/workflows/deploy.yml に GitHub Actions デプロイワークフローを作成（GitHub Pages）
-- [ ] T073 ローディング状態とスケルトンスクリーンを追加
-- [ ] T074 パフォーマンス最適化（遅延読み込み、メモ化）
-- [ ] T075 セキュリティ監査（RLS ポリシー検証、入力バリデーション）
+- [X] T070 [P] 全画面にモバイル向けレスポンシブスタイルを追加（< 768px）
+- [X] T071 [P] Edge Functions にエラーハンドリングとリトライロジックを実装
+- [X] T072 .github/workflows/deploy.yml に GitHub Actions デプロイワークフローを作成（GitHub Pages）
+- [X] T073 ローディング状態とスケルトンスクリーンを追加
+- [X] T074 パフォーマンス最適化（遅延読み込み、メモ化）
+- [X] T075 セキュリティ監査（RLS ポリシー検証、入力バリデーション）
 
 ---
 
