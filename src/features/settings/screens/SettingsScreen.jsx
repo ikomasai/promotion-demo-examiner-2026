@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useAdmin } from '../../../shared/contexts/AdminContext';
 import { useToast } from '../../../shared/contexts/ToastContext';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { useAppSettings } from '../hooks/useAppSettings';
 import SettingItem from '../components/SettingItem';
 import AutoApproveWarningModal from '../components/AutoApproveWarningModal';
@@ -27,6 +28,7 @@ import PasswordChangeModal from '../components/PasswordChangeModal';
  * @returns {React.ReactElement}
  */
 export default function SettingsScreen() {
+  const { isMobile } = useResponsive();
   const { isAdmin } = useAdmin();
   const { showSuccess, showError } = useToast();
   const { settings, loading, error, refresh, updateSetting, updating } = useAppSettings();
@@ -94,7 +96,7 @@ export default function SettingsScreen() {
     <View style={styles.screen}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile]}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={refresh} tintColor="#4dabf7" />
         }
@@ -253,6 +255,9 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     width: '100%',
     alignSelf: 'center',
+  },
+  scrollContentMobile: {
+    padding: 12,
   },
   centerContainer: {
     flex: 1,

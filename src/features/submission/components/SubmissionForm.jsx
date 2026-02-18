@@ -7,6 +7,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import OrganizationSelect from './OrganizationSelect';
 import ProjectSelect from './ProjectSelect';
 import MediaTypeSelect from './MediaTypeSelect';
@@ -46,6 +47,8 @@ export default function SubmissionForm({
   disabled = false,
   submitLabel = '提出',
 }) {
+  const { isMobile } = useResponsive();
+
   const [formData, setFormData] = useState({
     organizationId: null,
     projectId: null,
@@ -101,7 +104,7 @@ export default function SubmissionForm({
   const isDisabled = loading || disabled;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isMobile && styles.containerMobile]}>
       {/* 提出先選択 */}
       <View style={styles.section}>
         <Text style={styles.label}>提出先</Text>
@@ -205,6 +208,9 @@ export default function SubmissionForm({
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+  },
+  containerMobile: {
+    paddingHorizontal: 12,
   },
   section: {
     marginBottom: 20,

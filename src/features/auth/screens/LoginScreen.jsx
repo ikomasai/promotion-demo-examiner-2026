@@ -8,6 +8,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '../../../shared/contexts/AuthContext';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 
 /**
  * ログイン画面
@@ -20,12 +21,13 @@ import { useAuth } from '../../../shared/contexts/AuthContext';
  */
 export default function LoginScreen() {
   const { signIn, error } = useAuth();
+  const { isMobile } = useResponsive();
 
   return (
     <View style={styles.container}>
       {/* ヘッダー */}
       <View style={styles.header}>
-        <Text style={styles.title}>生駒祭 2026</Text>
+        <Text style={[styles.title, isMobile && styles.titleMobile]}>生駒祭 2026</Text>
         <Text style={styles.subtitle}>情宣AI判定システム</Text>
       </View>
 
@@ -76,6 +78,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 8,
+  },
+  titleMobile: {
+    fontSize: 26,
   },
   subtitle: {
     fontSize: 16,

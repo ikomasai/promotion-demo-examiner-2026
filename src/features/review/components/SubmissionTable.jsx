@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import StatusBadge from '../../submission/components/StatusBadge';
 
 /** 提出先バッジの設定 */
@@ -44,6 +45,7 @@ function isAutoApproved(submission) {
  * 審査カード（1件分）
  */
 function ReviewCard({ submission, onReview, onDetail }) {
+  const { isMobile } = useResponsive();
   const orgName = submission.organization?.organization_name || '不明';
   const projName = submission.project?.project_name || '不明';
   const typeConfig = TYPE_CONFIG[submission.submission_type] || TYPE_CONFIG.koho;
@@ -52,7 +54,7 @@ function ReviewCard({ submission, onReview, onDetail }) {
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, isMobile && styles.cardMobile]}
       onPress={() => onDetail(submission)}
       activeOpacity={0.7}
     >
@@ -150,6 +152,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 12,
+  },
+  cardMobile: {
+    padding: 12,
+    marginHorizontal: 8,
   },
   badgeRow: {
     flexDirection: 'row',

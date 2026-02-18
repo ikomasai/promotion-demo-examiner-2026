@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionForm from '../components/SubmissionForm';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
 import SubmissionConfirmModal from '../components/SubmissionConfirmModal';
@@ -40,6 +41,8 @@ export default function SubmitScreen() {
     submit,
     clearAll,
   } = useSubmission();
+
+  const { isMobile } = useResponsive();
 
   /** 画面フェーズ管理 */
   const [phase, setPhase] = useState('form');
@@ -238,7 +241,7 @@ export default function SubmitScreen() {
   }, [riskLevel, displayPrecheckResult, handleSubmit, handleReset, userComment, isHighRiskReasonValid]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}>
       {/* ヘッダー */}
       <View style={styles.header}>
         <Text style={styles.title}>正式提出</Text>
@@ -338,6 +341,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 40,
+  },
+  contentMobile: {
+    paddingHorizontal: 4,
   },
   header: {
     padding: 16,

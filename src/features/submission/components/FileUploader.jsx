@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 
 /**
  * ファイルアップローダー
@@ -18,6 +19,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
  * @description selectedSpec が null の場合は「媒体種別を先に選択してください」を表示
  */
 export default function FileUploader({ value, onChange, selectedSpec, disabled }) {
+  const { isMobile } = useResponsive();
   const [validationError, setValidationError] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef(null);
@@ -138,6 +140,7 @@ export default function FileUploader({ value, onChange, selectedSpec, disabled }
             backgroundColor: isDragOver ? '#252544' : '#2d2d44',
             opacity: disabled ? 0.5 : 1,
             cursor: disabled ? 'not-allowed' : 'pointer',
+            padding: isMobile ? '20px 12px' : '32px 16px',
           }}
         >
           <Text style={styles.dropText}>
