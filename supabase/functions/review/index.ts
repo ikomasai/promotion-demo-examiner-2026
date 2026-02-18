@@ -9,6 +9,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { supabaseAdmin, supabaseAnon } from '../_shared/supabase.ts';
+import { withRetry, errorResponse } from '../_shared/retry.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -105,20 +106,22 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 7. 楽観的ロック UPDATE
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from('josenai_submissions')
-      .update({
-        status: action === 'approve' ? 'approved' : 'rejected',
-        reviewer_comment: comment || null,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user.id,
-        version: submission.version + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', submissionId)
-      .eq('version', version)
-      .select('id')
-      .single();
+    const { data: updated, error: updateError } = await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_submissions')
+        .update({
+          status: action === 'approve' ? 'approved' : 'rejected',
+          reviewer_comment: comment || null,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user.id,
+          version: submission.version + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', submissionId)
+        .eq('version', version)
+        .select('id')
+        .single()
+    );
 
     if (updateError || !updated) {
       return jsonResponse({ error: 'version_conflict' }, 409);
@@ -127,6 +130,6 @@ serve(async (req: Request): Promise<Response> => {
     return jsonResponse({ success: true, submissionId: updated.id }, 200);
   } catch (err) {
     console.error('review error:', err);
-    return jsonResponse({ error: '審査処理中にエラーが発生しました' }, 500);
+    return errorResponse('審査処理中にエラーが発生しました', 500, corsHeaders);
   }
 });

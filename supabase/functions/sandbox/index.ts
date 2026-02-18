@@ -8,6 +8,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { supabaseAdmin } from '../_shared/supabase.ts';
 import { analyzeWithGemini, type GeminiResult } from '../_shared/geminiClient.ts';
+import { withRetry, errorResponse } from '../_shared/retry.ts';
 
 /** CORS ヘッダー */
 const corsHeaders = {
@@ -65,24 +66,28 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 3. アプリ設定の取得
-    const { data: settings } = await supabaseAdmin
-      .from('josenai_app_settings')
-      .select('key, value')
-      .in('key', ['sandbox_daily_limit', 'ai_timeout_seconds']);
+    const { data: settings } = await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_app_settings')
+        .select('key, value')
+        .in('key', ['sandbox_daily_limit', 'ai_timeout_seconds'])
+    );
 
     const settingsMap = new Map((settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
     const dailyLimit = parseInt(settingsMap.get('sandbox_daily_limit') ?? '3', 10);
     const timeoutSeconds = parseInt(settingsMap.get('ai_timeout_seconds') ?? '30', 10);
 
     // 4. プロフィール取得＋日次リセット判定
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('josenai_profiles')
-      .select('sandbox_count_today, sandbox_count_date')
-      .eq('user_id', user.id)
-      .single();
+    const { data: profile, error: profileError } = await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_profiles')
+        .select('sandbox_count_today, sandbox_count_date')
+        .eq('user_id', user.id)
+        .single()
+    );
 
     if (profileError || !profile) {
-      return jsonResponse({ error: 'プロフィールが見つかりません' }, 404);
+      return errorResponse('プロフィールが見つかりません', 404, corsHeaders);
     }
 
     const todayJST = getTodayJST();
@@ -137,13 +142,15 @@ serve(async (req: Request): Promise<Response> => {
 
     // 9. カウント更新（アトミック UPDATE）
     const newCount = effectiveCount + 1;
-    await supabaseAdmin
-      .from('josenai_profiles')
-      .update({
-        sandbox_count_today: newCount,
-        sandbox_count_date: todayJST,
-      })
-      .eq('user_id', user.id);
+    await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_profiles')
+        .update({
+          sandbox_count_today: newCount,
+          sandbox_count_date: todayJST,
+        })
+        .eq('user_id', user.id)
+    );
 
     // 10. レスポンス返却
     return jsonResponse({
@@ -155,6 +162,6 @@ serve(async (req: Request): Promise<Response> => {
     });
   } catch (err) {
     console.error('sandbox Edge Function エラー:', err);
-    return jsonResponse({ error: 'サーバーエラーが発生しました' }, 500);
+    return errorResponse('サーバーエラーが発生しました', 500, corsHeaders);
   }
 });
