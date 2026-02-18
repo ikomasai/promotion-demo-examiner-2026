@@ -9,6 +9,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { supabaseAdmin } from '../_shared/supabase.ts';
 import { analyzeWithGemini, type GeminiResult } from '../_shared/geminiClient.ts';
+import { withRetry, errorResponse } from '../_shared/retry.ts';
 import {
   getAccessToken,
   ensureFolder,
@@ -69,10 +70,12 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 3. アプリ設定の取得
-    const { data: settings } = await supabaseAdmin
-      .from('josenai_app_settings')
-      .select('key, value')
-      .in('key', ['submission_enabled', 'ai_timeout_seconds', 'auto_approve_enabled', 'auto_approve_threshold']);
+    const { data: settings } = await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_app_settings')
+        .select('key, value')
+        .in('key', ['submission_enabled', 'ai_timeout_seconds', 'auto_approve_enabled', 'auto_approve_threshold'])
+    );
 
     const settingsMap = new Map((settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
     const timeoutSeconds = parseInt(settingsMap.get('ai_timeout_seconds') ?? '30', 10);
@@ -201,16 +204,17 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 9. DB INSERT (josenai_submissions)
-    const { data: submission, error: insertError } = await supabaseAdmin
-      .from('josenai_submissions')
-      .insert({
+    const { data: submission, error: insertError } = await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_submissions')
+        .insert({
         user_id: user.id,
         organization_id: organizationId,
         project_id: projectId,
         submission_type: submissionType,
         media_type: mediaType,
         file_name: file.name,
-        file_size: fileBytes.length,
+        file_size_bytes: fileBytes.length,
         mime_type: mimeType,
         drive_file_id: driveFileId,
         drive_file_url: driveFileUrl,
@@ -223,7 +227,8 @@ serve(async (req: Request): Promise<Response> => {
         version: 1,
       })
       .select('id')
-      .single();
+      .single()
+    );
 
     if (insertError || !submission) {
       console.error('DB INSERT エラー:', insertError);
@@ -277,6 +282,6 @@ serve(async (req: Request): Promise<Response> => {
     });
   } catch (err) {
     console.error('submit Edge Function エラー:', err);
-    return jsonResponse({ error: 'サーバーエラーが発生しました' }, 500);
+    return errorResponse('サーバーエラーが発生しました', 500, corsHeaders);
   }
 });

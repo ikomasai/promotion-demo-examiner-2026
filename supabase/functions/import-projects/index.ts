@@ -7,7 +7,9 @@
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { supabaseAdmin } from '../_shared/supabase.ts';
+import { withRetry } from '../_shared/retry.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,6 +64,29 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // 認証チェック
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: '認証が必要です' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 管理者権限チェック
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: isAdmin } = await userClient.rpc('fn_is_josenai_admin');
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ success: false, error: '管理者権限が必要です' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // FormData からファイル取得
     const formData = await req.formData();
     const file = formData.get('file');
@@ -122,10 +147,12 @@ serve(async (req: Request): Promise<Response> => {
     }));
 
     // UPSERT 実行（ON CONFLICT project_code）
-    const { data, error } = await supabaseAdmin
-      .from('josenai_projects')
-      .upsert(upsertData, { onConflict: 'project_code' })
-      .select('id');
+    const { data, error } = await withRetry(() =>
+      supabaseAdmin
+        .from('josenai_projects')
+        .upsert(upsertData, { onConflict: 'project_code' })
+        .select('id')
+    );
 
     if (error) {
       console.error('UPSERT エラー:', error);

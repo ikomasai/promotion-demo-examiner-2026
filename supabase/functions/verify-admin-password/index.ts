@@ -7,7 +7,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
-import { supabaseAdmin } from '../_shared/supabase.ts';
+import { supabaseAdmin, supabaseAnon } from '../_shared/supabase.ts';
 
 /**
  * リクエストボディ型定義
@@ -55,6 +55,26 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // 認証チェック（ブルートフォース対策: ログイン済みユーザーのみ実行可能）
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ valid: false, error: '認証が必要です' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(
+      authHeader.replace('Bearer ', ''),
+    );
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ valid: false, error: '認証に失敗しました' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // リクエストボディ解析
     const { role, password }: VerifyPasswordRequest = await req.json();
 
