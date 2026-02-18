@@ -7,7 +7,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import SkeletonCard from '../../../shared/components/SkeletonCard';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import RuleDocumentCard from '../components/RuleDocumentCard';
 import RuleEditModal from '../components/RuleEditModal';
 import { useRuleDocuments } from '../hooks/useRuleDocuments';
@@ -18,6 +20,7 @@ import { useToast } from '../../../shared/contexts/ToastContext';
  * ルール管理画面
  */
 export default function RuleListScreen() {
+  const { isMobile } = useResponsive();
   const { isReviewer } = useAdmin();
   const { showSuccess, showError } = useToast();
   const { documents, loading, error, refresh, updateDocument } = useRuleDocuments();
@@ -59,7 +62,7 @@ export default function RuleListScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}
       refreshControl={
         <RefreshControl
           refreshing={loading && documents.length > 0}
@@ -87,10 +90,11 @@ export default function RuleListScreen() {
 
       {/* ローディング（初回のみ） */}
       {loading && documents.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
+        <>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </>
       )}
 
       {/* 文書カードリスト */}
@@ -128,6 +132,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 40,
+  },
+  contentMobile: {
+    paddingHorizontal: 4,
   },
   header: {
     flexDirection: 'row',
@@ -167,15 +174,6 @@ const styles = StyleSheet.create({
     color: '#ff9800',
     fontSize: 13,
     textAlign: 'center',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 12,
   },
   emptyContainer: {
     alignItems: 'center',

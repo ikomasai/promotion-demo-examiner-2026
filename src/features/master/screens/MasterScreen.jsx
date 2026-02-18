@@ -6,7 +6,9 @@
  */
 
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import SkeletonCard from '../../../shared/components/SkeletonCard';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import CsvImporter from '../components/CsvImporter';
 import OrganizationTable from '../components/OrganizationTable';
 import ProjectTable from '../components/ProjectTable';
@@ -18,6 +20,7 @@ import { useToast } from '../../../shared/contexts/ToastContext';
  * マスタ管理画面
  */
 export default function MasterScreen() {
+  const { isMobile } = useResponsive();
   const { organizations, projects, loading, error, refresh } = useMasterData();
   const { importing, importCsv } = useCsvImport();
   const { showSuccess, showError } = useToast();
@@ -73,9 +76,10 @@ export default function MasterScreen() {
 
       {/* ローディング（初回のみ） */}
       {loading && organizations.length === 0 && projects.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
-          <Text style={styles.loadingText}>読み込み中...</Text>
+        <View style={styles.section}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </View>
       )}
 
@@ -102,7 +106,15 @@ export default function MasterScreen() {
           </Text>
         )}
 
-        <OrganizationTable organizations={organizations} />
+        {isMobile ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator>
+            <View style={{ minWidth: 400 }}>
+              <OrganizationTable organizations={organizations} />
+            </View>
+          </ScrollView>
+        ) : (
+          <OrganizationTable organizations={organizations} />
+        )}
       </View>
 
       {/* ===== 企画マスタセクション ===== */}
@@ -128,7 +140,15 @@ export default function MasterScreen() {
           </Text>
         )}
 
-        <ProjectTable projects={projects} />
+        {isMobile ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator>
+            <View style={{ minWidth: 400 }}>
+              <ProjectTable projects={projects} />
+            </View>
+          </ScrollView>
+        ) : (
+          <ProjectTable projects={projects} />
+        )}
       </View>
 
       {/* 下部余白 */}
@@ -167,15 +187,6 @@ const styles = StyleSheet.create({
     color: '#ff9800',
     fontSize: 13,
     textAlign: 'center',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 12,
   },
   section: {
     marginHorizontal: 16,

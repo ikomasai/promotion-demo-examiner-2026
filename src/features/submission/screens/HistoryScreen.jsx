@@ -7,7 +7,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import SkeletonCard from '../../../shared/components/SkeletonCard';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionCard from '../components/SubmissionCard';
 import SubmissionDetailModal from '../components/SubmissionDetailModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
@@ -19,6 +21,7 @@ import { useToast } from '../../../shared/contexts/ToastContext';
  * 提出履歴画面
  */
 export default function HistoryScreen() {
+  const { isMobile } = useResponsive();
   const { submissions, loading, error, refresh } = useSubmissionHistory();
   const { deleting, deleteSubmission } = useSubmissionDelete();
   const { showSuccess, showError } = useToast();
@@ -65,7 +68,7 @@ export default function HistoryScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}
       refreshControl={
         <RefreshControl
           refreshing={loading && submissions.length > 0}
@@ -93,10 +96,11 @@ export default function HistoryScreen() {
 
       {/* ローディング（初回のみ） */}
       {loading && submissions.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
+        <>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </>
       )}
 
       {/* 空状態 */}
@@ -147,6 +151,9 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 40,
   },
+  contentMobile: {
+    paddingHorizontal: 4,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -183,15 +190,6 @@ const styles = StyleSheet.create({
     color: '#ff9800',
     fontSize: 13,
     textAlign: 'center',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 12,
   },
   emptyContainer: {
     alignItems: 'center',

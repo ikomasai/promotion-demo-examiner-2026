@@ -7,7 +7,9 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import SkeletonCard from '../../../shared/components/SkeletonCard';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionTable from '../components/SubmissionTable';
 import ReviewModal from '../components/ReviewModal';
 import DashboardFilters from '../components/DashboardFilters';
@@ -21,6 +23,7 @@ import { useToast } from '../../../shared/contexts/ToastContext';
  * ダッシュボード画面
  */
 export default function DashboardScreen() {
+  const { isMobile } = useResponsive();
   const { isAdmin, isKohoReviewer, isKikakuReviewer } = useAdmin();
   const { showSuccess, showError } = useToast();
 
@@ -115,7 +118,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}
       refreshControl={
         <RefreshControl
           refreshing={loading && submissions.length > 0}
@@ -160,10 +163,12 @@ export default function DashboardScreen() {
 
       {/* ローディング（初回のみ） */}
       {loading && submissions.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
+        <>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </>
       )}
 
       {/* 提出カードリスト */}
@@ -207,6 +212,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 40,
+  },
+  contentMobile: {
+    paddingHorizontal: 4,
   },
   header: {
     flexDirection: 'row',
@@ -260,14 +268,5 @@ const styles = StyleSheet.create({
     color: '#4dabf7',
     fontSize: 13,
     textAlign: 'center',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 12,
   },
 });
