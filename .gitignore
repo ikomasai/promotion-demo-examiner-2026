@@ -45,3 +45,11 @@ coverage/
 *.log
 *.tmp
 test-results/
+
+# Debug screenshots
+*.png
+!src/assets/images/*.png
+
+# MCP / Supabase temp
+.playwright-mcp/
+supabase/.temp/
