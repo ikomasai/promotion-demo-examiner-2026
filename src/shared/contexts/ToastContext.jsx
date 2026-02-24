@@ -56,9 +56,9 @@ export function ToastProvider({ children }) {
 
     setToasts((prev) => [...prev, toast]);
 
-    // 自動消去
+    // 自動消去（setToasts の関数更新で stale closure を回避）
     setTimeout(() => {
-      hideToast(id);
+      setToasts((prev) => prev.filter((t) => t.id !== id));
     }, duration);
   }, []);
 
