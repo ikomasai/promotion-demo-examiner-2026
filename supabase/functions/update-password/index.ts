@@ -103,7 +103,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // bcrypt でハッシュ生成
-    const hash = await bcrypt.hash(newPassword);
+    const hash = bcrypt.hashSync(newPassword);
 
     // josenai_app_settings を更新
     const { error: updateError } = await supabaseAdmin
