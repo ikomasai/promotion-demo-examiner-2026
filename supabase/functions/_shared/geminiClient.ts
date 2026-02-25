@@ -117,7 +117,7 @@ ${JSON.stringify(checkItemsForPrompt, null, 2)}
 - reason: flagged が true の場合は違反の具体的な理由を日本語で記載、false の場合は空文字
 - すべてのルールについて回答してください`;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
 
   const body = {
     contents: [
@@ -149,7 +149,7 @@ ${JSON.stringify(checkItemsForPrompt, null, 2)}
     console.error('Gemini API error:', response.status, errorText);
     return {
       skipped: true,
-      reason: 'api_error',
+      reason: `api_error:${response.status}:${errorText.slice(0, 200)}`,
       ai_risk_score: null,
       ai_risk_details: null,
     };

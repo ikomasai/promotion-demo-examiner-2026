@@ -41,7 +41,10 @@ function base64url(data: Uint8Array | string): string {
   const input = typeof data === 'string'
     ? new TextEncoder().encode(data)
     : data;
-  const binary = String.fromCharCode(...input);
+  let binary = '';
+  for (let i = 0; i < input.length; i += 8192) {
+    binary += String.fromCharCode(...input.subarray(i, i + 8192));
+  }
   return btoa(binary)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
@@ -71,7 +74,7 @@ export async function getAccessToken(): Promise<string> {
   const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const payload = base64url(JSON.stringify({
     iss: sa.client_email,
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    scope: 'https://www.googleapis.com/auth/drive',
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600,
@@ -154,10 +157,10 @@ export async function ensureFolder(
   let parentId = rootFolderId;
 
   for (const segment of pathSegments) {
-    // 既存フォルダを検索
+    // 既存フォルダを検索（共有ドライブ対応）
     const query = `name='${segment.replace(/'/g, "\\'")}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
     const searchResp = await driveRequest(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)`,
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)&supportsAllDrives=true&includeItemsFromAllDrives=true`,
       { method: 'GET' },
       accessToken,
     );
@@ -171,9 +174,9 @@ export async function ensureFolder(
     if (searchData.files?.length > 0) {
       parentId = searchData.files[0].id;
     } else {
-      // フォルダ作成
+      // フォルダ作成（共有ドライブ対応）
       const createResp = await driveRequest(
-        'https://www.googleapis.com/drive/v3/files',
+        'https://www.googleapis.com/drive/v3/files?supportsAllDrives=true',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -233,7 +236,7 @@ export async function uploadFile(
   body.set(endPart, offset);
 
   const resp = await driveRequest(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true',
     {
       method: 'POST',
       headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
@@ -261,7 +264,7 @@ export async function shareFile(
 ): Promise<string> {
   // パーミッション作成（anyone, reader）
   const permResp = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -278,7 +281,7 @@ export async function shareFile(
 
   // webViewLink を取得
   const fileResp = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink`,
+    `https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink&supportsAllDrives=true`,
     { method: 'GET' },
     accessToken,
   );
@@ -300,7 +303,7 @@ export async function deleteFile(
   fileId: string,
 ): Promise<void> {
   const resp = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files/${fileId}`,
+    `https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`,
     { method: 'DELETE' },
     accessToken,
   );

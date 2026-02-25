@@ -117,9 +117,9 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // bcrypt でパスワード検証
+    // bcrypt でパスワード検証（compareSync: Deno Deploy は Worker 非対応のため）
     const storedHash = setting.value;
-    const isValid = await bcrypt.compare(password, storedHash);
+    const isValid = bcrypt.compareSync(password, storedHash);
 
     const response: VerifyPasswordResponse = { valid: isValid };
 

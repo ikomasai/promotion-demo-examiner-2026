@@ -138,7 +138,7 @@ serve(async (req: Request): Promise<Response> => {
     // 6. 団体名取得（Drive フォルダパスに使用）
     const { data: org, error: orgError } = await supabaseAdmin
       .from('josenai_organizations')
-      .select('name')
+      .select('organization_name')
       .eq('id', organizationId)
       .single();
 
@@ -159,8 +159,8 @@ serve(async (req: Request): Promise<Response> => {
 
       // フォルダパス構築
       const folderPath = submissionType === 'kikaku'
-        ? ['生駒祭2026', '企画物', org.name]
-        : ['生駒祭2026', 'SNS', org.name];
+        ? ['生駒祭2026', '企画物', org.organization_name]
+        : ['生駒祭2026', 'SNS', org.organization_name];
 
       const folderId = await ensureFolder(accessToken, folderPath, rootFolderId);
       driveFileId = await uploadFile(accessToken, fileBytes, mimeType, file.name, folderId);
@@ -215,13 +215,10 @@ serve(async (req: Request): Promise<Response> => {
         media_type: mediaType,
         file_name: file.name,
         file_size_bytes: fileBytes.length,
-        mime_type: mimeType,
         drive_file_id: driveFileId,
         drive_file_url: driveFileUrl,
         ai_risk_score: aiResult.ai_risk_score,
         ai_risk_details: aiResult.ai_risk_details,
-        ai_skipped: aiResult.skipped,
-        ai_skip_reason: aiResult.reason ?? null,
         user_comment: userComment || null,
         status: 'pending',
         version: 1,
@@ -259,7 +256,11 @@ serve(async (req: Request): Promise<Response> => {
         .from('josenai_submissions')
         .update({
           status: 'approved',
-          reviewer_comment: `自動承認（リスクスコア ${aiResult.ai_risk_score}% ≤ 閾値 ${autoApproveThreshold}%）`,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: null,
+          reviewer_comment: `システム自動承認: AIリスクスコア ${aiResult.ai_risk_score}% (閾値: ${autoApproveThreshold}%)`,
+          version: 2,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', submission.id);
 

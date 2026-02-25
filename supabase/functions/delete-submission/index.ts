@@ -6,7 +6,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { supabaseAnon } from '../_shared/supabase.ts';
+import { supabaseAdmin } from '../_shared/supabase.ts';
 import { getAccessToken, deleteFile } from '../_shared/driveClient.ts';
 
 const corsHeaders = {
@@ -29,7 +29,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', ''),
     );
 
@@ -47,6 +47,20 @@ serve(async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: 'driveFileId は必須です' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // 所有権チェック: DB に該当行が残っていて他ユーザーの物なら拒否
+    const { data: row } = await supabaseAdmin
+      .from('josenai_submissions')
+      .select('user_id')
+      .eq('drive_file_id', driveFileId)
+      .maybeSingle();
+
+    if (row && row.user_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: '権限がありません' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
