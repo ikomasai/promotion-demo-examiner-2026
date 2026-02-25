@@ -1,34 +1,95 @@
 /**
  * @fileoverview アプリ基本動作テスト
- * @description Phase 2 完了後の基本動作確認
+ * @description Email/Password 認証画面の E2E テスト
  */
 
 const { test, expect } = require('@playwright/test');
 
-test.describe('Phase 2 動作確認', () => {
-  test('ログイン画面が表示される', async ({ page }) => {
+test.describe('ログイン画面 表示確認', () => {
+  test('ログイン画面の基本要素が表示される', async ({ page }) => {
     await page.goto('/');
 
-    // タイトルが表示される
+    // タイトル
     await expect(page.getByText('生駒祭 2026')).toBeVisible({ timeout: 30000 });
-
-    // サブタイトルが表示される
     await expect(page.getByText('情宣AI判定システム')).toBeVisible();
 
-    // ログインボタンが表示される
-    await expect(page.getByText('Google でログイン')).toBeVisible();
+    // タブ
+    await expect(page.getByText('ログイン')).toBeVisible();
+    await expect(page.getByText('新規登録')).toBeVisible();
 
-    // ドメイン説明が表示される
-    await expect(page.getByText('@kindai.ac.jp')).toBeVisible();
+    // フォーム入力欄
+    await expect(page.getByPlaceholder('example@kindai.ac.jp')).toBeVisible();
+    await expect(page.getByPlaceholder('6文字以上')).toBeVisible();
+
+    // フッター
+    await expect(page.getByText('大学祭実行委員会 情宣局')).toBeVisible();
+  });
+
+  test('タブ切替が動作する', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('text=生駒祭 2026', { timeout: 30000 });
+
+    // 初期状態: ログインタブがアクティブ → ボタンは「ログイン」
+    const submitButton = page.getByRole('button', { name: 'ログイン' });
+    await expect(submitButton).toBeVisible();
+
+    // 新規登録タブに切替
+    await page.getByText('新規登録').click();
+
+    // ボタンが「登録」に変わる
+    await expect(page.getByRole('button', { name: '登録' })).toBeVisible();
+
+    // ログインタブに戻す
+    await page.getByText('ログイン').first().click();
+    await expect(page.getByRole('button', { name: 'ログイン' })).toBeVisible();
+  });
+
+  test('空欄で送信するとバリデーションエラーが表示される', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('text=生駒祭 2026', { timeout: 30000 });
+
+    // 空のまま送信
+    await page.getByRole('button', { name: 'ログイン' }).click();
+
+    // エラーメッセージ
+    await expect(page.getByText('メールアドレスとパスワードを入力してください')).toBeVisible();
+  });
+
+  test('kindai.ac.jp 以外のドメインでエラーが表示される', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('text=生駒祭 2026', { timeout: 30000 });
+
+    await page.getByPlaceholder('example@kindai.ac.jp').fill('test@gmail.com');
+    await page.getByPlaceholder('6文字以上').fill('password123');
+
+    await page.getByRole('button', { name: 'ログイン' }).click();
+
+    await expect(page.getByText('@kindai.ac.jp のメールアドレスを使用してください')).toBeVisible();
+  });
+
+  test('新規登録時にパスワード6文字未満でエラーが表示される', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('text=生駒祭 2026', { timeout: 30000 });
+
+    // 新規登録タブに切替
+    await page.getByText('新規登録').click();
+
+    await page.getByPlaceholder('example@kindai.ac.jp').fill('test@kindai.ac.jp');
+    await page.getByPlaceholder('6文字以上').fill('12345');
+
+    await page.getByRole('button', { name: '登録' }).click();
+
+    await expect(page.getByText('パスワードは6文字以上で入力してください')).toBeVisible();
   });
 
   test('スクリーンショットを撮影', async ({ page }) => {
     await page.goto('/');
-
-    // ページの読み込みを待つ
     await page.waitForSelector('text=生駒祭 2026', { timeout: 30000 });
 
-    // スクリーンショット保存
     await page.screenshot({ path: 'tests/screenshots/login-screen.png', fullPage: true });
+
+    // 新規登録タブもキャプチャ
+    await page.getByText('新規登録').click();
+    await page.screenshot({ path: 'tests/screenshots/register-screen.png', fullPage: true });
   });
 });
