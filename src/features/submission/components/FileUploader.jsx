@@ -143,12 +143,12 @@ export default function FileUploader({ value, onChange, selectedSpec, disabled }
             padding: isMobile ? '20px 12px' : '32px 16px',
           }}
         >
-          <Text style={styles.dropText}>
-            ファイルをドラッグ＆ドロップ{'\n'}またはクリックして選択
-          </Text>
-          <Text style={styles.specHint}>
+          <p style={{ color: '#a0a0a0', fontSize: 14, textAlign: 'center', lineHeight: '24px', margin: 0 }}>
+            ファイルをドラッグ＆ドロップ<br />またはクリックして選択
+          </p>
+          <p style={{ color: '#666', fontSize: 11, textAlign: 'center', marginTop: 8, marginBottom: 0 }}>
             対応形式: {selectedSpec.allowed_extensions.join(', ')} / 最大 {selectedSpec.max_file_size_mb}MB
-          </Text>
+          </p>
         </div>
       )}
 
@@ -221,18 +221,6 @@ const styles = StyleSheet.create({
     color: '#f44336',
     fontSize: 13,
     fontWeight: '600',
-  },
-  dropText: {
-    color: '#a0a0a0',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  specHint: {
-    color: '#666',
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 8,
   },
   errorText: {
     color: '#f44336',
