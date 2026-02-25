@@ -129,9 +129,9 @@ INSERT INTO josenai_rule_documents (document_type, title, content, version) VALU
 -- パスワードは bcrypt ハッシュ（デフォルト: admin123）
 -- ------------------------------------------------------------
 INSERT INTO josenai_app_settings (key, value, description) VALUES
-    ('koho_admin_password_hash', '$2b$10$rOvHPxfzO2yPMfGqPvXvYOJHKjHVXJKqQnKpGqWvVpXJKqQnKpGq', '広報部管理者パスワード（bcrypt）'),
-    ('kikaku_admin_password_hash', '$2b$10$rOvHPxfzO2yPMfGqPvXvYOJHKjHVXJKqQnKpGqWvVpXJKqQnKpGq', '企画管理部管理者パスワード（bcrypt）'),
-    ('super_admin_password_hash', '$2b$10$rOvHPxfzO2yPMfGqPvXvYOJHKjHVXJKqQnKpGqWvVpXJKqQnKpGq', 'スーパー管理者パスワード（bcrypt）'),
+    ('koho_admin_password_hash', '$2a$10$N8kGdaYX43HxMSAEJfklcuw/8nvAe7c2u6vaZ0xxp8Dz1YsdC9xHW', '広報部管理者パスワード（bcrypt）'),
+    ('kikaku_admin_password_hash', '$2a$10$UMBRY0pFDYbgxpPij3aGN.ebpsP6tSKwRBuXbiUUOQIjs6RW8Opxq', '企画管理部管理者パスワード（bcrypt）'),
+    ('super_admin_password_hash', '$2a$10$/JL9/64m/aLMPgGFIZJBB.ugEp2kTwfEm0DUiLo3kD7TDR1N//QW.', 'スーパー管理者パスワード（bcrypt）'),
     ('sandbox_daily_limit', '3', 'サンドボックス1日上限回数'),
     ('submission_enabled', 'true', '提出受付中フラグ'),
     ('ai_timeout_seconds', '30', 'AI判定タイムアウト秒数'),
