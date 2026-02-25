@@ -1,6 +1,6 @@
 /**
- * @fileoverview 認証コンテキスト - Google OAuth 認証状態管理
- * @description Supabase Auth を使用した Google OAuth 認証を管理。
+ * @fileoverview 認証コンテキスト - Email/Password 認証状態管理
+ * @description Supabase Auth を使用した Email/Password 認証を管理。
  *              @kindai.ac.jp ドメイン制限。
  *              初回ログイン時に user_profiles（共有）と josenai_profiles（情宣固有）を upsert。
  * @module shared/contexts/AuthContext
@@ -8,9 +8,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../services/supabase/client';
-
-/** @constant {string} 許可されるメールドメイン */
-const ALLOWED_DOMAIN = '@kindai.ac.jp';
+import { isAllowedDomain } from '../utils/validateEmail';
 
 /**
  * @typedef {Object} Profile
@@ -27,7 +25,8 @@ const ALLOWED_DOMAIN = '@kindai.ac.jp';
  * @property {Profile|null} profile - 統合プロフィールデータ
  * @property {boolean} loading - 読み込み中フラグ
  * @property {string|null} error - エラーメッセージ
- * @property {Function} signIn - ログイン開始
+ * @property {Function} signIn - Email/Password ログイン
+ * @property {Function} signUp - 新規登録
  * @property {Function} signOut - ログアウト
  * @property {Function} refreshProfile - プロフィール再取得
  */
@@ -36,7 +35,7 @@ const AuthContext = createContext(null);
 
 /**
  * 認証プロバイダー
- * @description Google OAuth 認証を管理し、ログイン時に共有・情宣固有プロフィールを upsert する。
+ * @description Email/Password 認証を管理し、ログイン時に共有・情宣固有プロフィールを upsert する。
  * @param {Object} props
  * @param {React.ReactNode} props.children
  */
@@ -55,7 +54,7 @@ export function AuthProvider({ children }) {
    */
   const fetchOrCreateProfile = useCallback(async (authUser) => {
     try {
-      const displayName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '';
+      const displayName = authUser.email?.split('@')[0] || '';
 
       // 1. user_profiles（共有テーブル）に upsert
       const { error: userProfileError } = await supabase
@@ -72,8 +71,10 @@ export function AuthProvider({ children }) {
         console.error('user_profiles upsert エラー:', userProfileError);
       }
 
-      // 2. josenai_profiles（情宣固有テーブル）に upsert
-      const { data: josenaiProfile, error: josenaiError } = await supabase
+      // 2. josenai_profiles（情宣固有テーブル）に初回のみ行作成
+      //    ignoreDuplicates: true → 既存行がある場合はスキップ（既存データを上書きしない）
+      //    初回ログイン時のみ sandbox_count_today=0 で行を作成する意図
+      await supabase
         .from('josenai_profiles')
         .upsert(
           {
@@ -81,15 +82,20 @@ export function AuthProvider({ children }) {
             sandbox_count_today: 0,
           },
           { onConflict: 'user_id', ignoreDuplicates: true }
-        )
+        );
+
+      // 3. 最新データを select で取得
+      const { data: josenaiProfile, error: josenaiError } = await supabase
+        .from('josenai_profiles')
         .select('sandbox_count_today, sandbox_count_date')
-        .single();
+        .eq('user_id', authUser.id)
+        .maybeSingle();
 
       if (josenaiError) {
-        console.error('josenai_profiles upsert エラー:', josenaiError);
+        console.error('josenai_profiles 取得エラー:', josenaiError);
       }
 
-      // 3. 統合プロフィールを構築
+      // 4. 統合プロフィールを構築
       return {
         id: authUser.id,
         email: authUser.email,
@@ -114,34 +120,71 @@ export function AuthProvider({ children }) {
   }, [user, fetchOrCreateProfile]);
 
   /**
-   * ドメイン検証
+   * Email/Password ログイン
    * @param {string} email
-   * @returns {boolean}
+   * @param {string} password
    */
-  const isAllowedDomain = (email) => email?.endsWith(ALLOWED_DOMAIN);
-
-  /**
-   * Google OAuth ログイン
-   * @description @kindai.ac.jp ドメインのみ許可
-   */
-  const signIn = useCallback(async () => {
+  const signIn = useCallback(async (email, password) => {
     setError(null);
     try {
-      const { error: authError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          queryParams: { hd: 'kindai.ac.jp' },
-        },
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
       if (authError) {
-        setError('ログインに失敗しました。');
-        console.error('OAuth エラー:', authError);
+        setError('メールアドレスまたはパスワードが正しくありません。');
+        console.error('signIn エラー:', authError);
+        return 'error';
       }
+      return 'ok';
     } catch (err) {
       setError('ログイン処理中にエラーが発生しました。');
       console.error('signIn 例外:', err);
+      return 'error';
+    }
+  }, []);
+
+  /**
+   * 新規登録
+   * @description @kindai.ac.jp ドメインのみ許可
+   * @param {string} email
+   * @param {string} password
+   */
+  const signUp = useCallback(async (email, password) => {
+    setError(null);
+
+    if (!isAllowedDomain(email)) {
+      setError('@kindai.ac.jp のメールアドレスを使用してください。');
+      return 'error';
+    }
+
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) {
+        if (authError.message?.includes('already registered')) {
+          setError('このメールアドレスは既に登録されています。');
+        } else {
+          setError('登録に失敗しました: ' + authError.message);
+        }
+        console.error('signUp エラー:', authError);
+        return 'error';
+      }
+
+      // session が null = メール確認待ち（Confirm email 有効時）
+      // session が存在 = 自動ログイン（Confirm email 無効時 → onAuthStateChange が処理）
+      if (!data.session) {
+        return 'confirmation_required';
+      }
+      return 'ok';
+    } catch (err) {
+      setError('登録処理中にエラーが発生しました。');
+      console.error('signUp 例外:', err);
+      return 'error';
     }
   }, []);
 
@@ -165,57 +208,32 @@ export function AuthProvider({ children }) {
 
   /**
    * 認証状態の初期化と監視
+   * @description onAuthStateChange 内では React state の更新のみ行い、
+   *              DB操作（profile upsert）は別の useEffect に分離する。
+   *              Supabase v2 の navigator.locks と onAuthStateChange コールバック内の
+   *              DB操作が競合しデッドロックするのを防ぐ。
    */
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session?.user) {
-          if (!isAllowedDomain(session.user.email)) {
-            await supabase.auth.signOut();
-            if (mounted) {
-              setError('@kindai.ac.jp のメールアドレスでログインしてください。');
-              setLoading(false);
-            }
-            return;
-          }
-
-          if (mounted) {
-            setUser(session.user);
-            const userProfile = await fetchOrCreateProfile(session.user);
-            setProfile(userProfile);
-          }
-        }
-      } catch (err) {
-        console.error('認証初期化エラー:', err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
 
-        if (event === 'SIGNED_IN' && session?.user) {
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session?.user) {
           if (!isAllowedDomain(session.user.email)) {
             setError('@kindai.ac.jp のメールアドレスでログインしてください。');
-            await supabase.auth.signOut();
+            supabase.auth.signOut();
             return;
           }
           setUser(session.user);
           setError(null);
-          const userProfile = await fetchOrCreateProfile(session.user);
-          setProfile(userProfile);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);
         }
+
+        setLoading(false);
       }
     );
 
@@ -223,9 +241,25 @@ export function AuthProvider({ children }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchOrCreateProfile]);
+  }, []);
 
-  const value = { user, profile, loading, error, signIn, signOut, refreshProfile };
+  /**
+   * user 変更時にプロフィールを取得・作成
+   * @description onAuthStateChange とは別の useEffect で DB 操作を行い、
+   *              Supabase auth ロックとの競合を回避する。
+   */
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    fetchOrCreateProfile(user).then((p) => {
+      if (!cancelled) setProfile(p);
+    });
+
+    return () => { cancelled = true; };
+  }, [user, fetchOrCreateProfile]);
+
+  const value = { user, profile, loading, error, signIn, signUp, signOut, refreshProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

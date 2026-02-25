@@ -12,7 +12,7 @@
  *
  * @example
  * // 認証
- * await supabase.auth.signInWithOAuth({ provider: 'google' });
+ * await supabase.auth.signInWithPassword({ email, password });
  *
  * @example
  * // Edge Function 呼び出し
@@ -40,7 +40,7 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
  * Supabase クライアント インスタンス（シングルトン）
  *
  * @description 以下の機能を提供:
- * - auth: Google OAuth 認証、セッション管理
+ * - auth: Email/Password 認証、セッション管理
  * - from(): データベーステーブルへのCRUD操作
  * - functions.invoke(): Edge Functions の呼び出し
  * - storage: ファイルストレージ（本システムでは Google Drive を使用するため未使用）
@@ -72,7 +72,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
     /**
      * URL フラグメントからセッションを検出
-     * @description OAuth コールバック後のセッション復元に使用
+     * @description パスワードリセット等のリンクからのセッション復元に使用
      */
     detectSessionInUrl: true,
   },
