@@ -118,7 +118,6 @@ project-root/
 │   ├── features/                       # 機能ごとにまとめる
 │   │   ├── auth/                       # 認証
 │   │   │   ├── components/
-│   │   │   │   ├── GoogleLoginButton.jsx
 │   │   │   │   └── AdminPasswordModal.jsx
 │   │   │   ├── hooks/
 │   │   │   │   └── useAuth.js
@@ -543,7 +542,7 @@ DrawerNavigator
 
 ### 認証方式
 
-- Google OAuth 認証
+- Email/Password 認証
 - 共有 Supabase プロジェクトの認証基盤（Auth）を使用
 - @kindai.ac.jp ドメインのみ許可
 
@@ -551,10 +550,10 @@ DrawerNavigator
 
 | 種別 | 認証方法 | 提出 | koho審査 | kikaku審査 | 設定管理 |
 |------|---------|------|---------|---------|---------|
-| 一般ユーザー（出展団体） | Google OAuth | ○（自分のみ） | - | - | - |
-| 広報部 | Google OAuth + ロール | ○ | ○ | - | - |
-| 企画管理部 | Google OAuth + ロール | ○ | - | ○ | - |
-| 管理者 | Google OAuth + ロール | ○ | ○ | ○ | ○ |
+| 一般ユーザー（出展団体） | Email/Password | ○（自分のみ） | - | - | - |
+| 広報部 | Email/Password + ロール | ○ | ○ | - | - |
+| 企画管理部 | Email/Password + ロール | ○ | - | ○ | - |
+| 管理者 | Email/Password + ロール | ○ | ○ | ○ | ○ |
 
 ### 管理者認証
 
@@ -574,11 +573,11 @@ DrawerNavigator
 ### ログインフロー
 
 ```
-1. ログイン画面表示
+1. ログイン画面表示（ログイン / 新規登録 タブ）
    ↓
-2. [Googleでログイン] ボタンをクリック
+2. メールアドレスとパスワードを入力
    ↓
-3. Google OAuth 認証（@kindai.ac.jp のみ）
+3. Email/Password 認証（@kindai.ac.jp ドメインのみ）
    ↓
 4. 初回ログイン → user_profiles + josenai_profiles を upsert
    ↓
@@ -930,7 +929,7 @@ josenai_app_settings テーブル:
 #### 概要・方針
 
 - Google Drive REST API v3 を直接呼び出す（`googleapis` npm パッケージは Edge Functions のデプロイサイズ上限に不適切）
-- サービスアカウント認証（ユーザーの Google OAuth とは独立）
+- サービスアカウント認証（ユーザー認証とは独立）
 - Edge Function `submit` から `_shared/driveClient.ts` 経由で利用
 
 #### 認証フロー
@@ -1035,7 +1034,8 @@ POST /drive/v3/files/{fileId}/permissions
 
 | 機能 | メソッド | 説明 |
 |------|---------|------|
-| ログイン | supabase.auth.signInWithOAuth() | Google OAuth でログイン |
+| ログイン | supabase.auth.signInWithPassword() | Email/Password でログイン |
+| 新規登録 | supabase.auth.signUp() | Email/Password で新規登録 |
 | ログアウト | supabase.auth.signOut() | ログアウト |
 | セッション取得 | supabase.auth.getSession() | 現在のセッション情報を取得 |
 
