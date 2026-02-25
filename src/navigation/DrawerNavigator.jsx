@@ -37,6 +37,15 @@ function withErrorBoundary(Component) {
   };
 }
 
+// モジュールレベルで生成（レンダー毎に新しい参照が作られるのを防ぐ）
+const SafeSandboxScreen = withErrorBoundary(SandboxScreen);
+const SafeSubmitScreen = withErrorBoundary(SubmitScreen);
+const SafeHistoryScreen = withErrorBoundary(HistoryScreen);
+const SafeDashboardScreen = withErrorBoundary(DashboardScreen);
+const SafeRuleListScreen = withErrorBoundary(RuleListScreen);
+const SafeMasterScreen = withErrorBoundary(MasterScreen);
+const SafeSettingsScreen = withErrorBoundary(SettingsScreen);
+
 /**
  * ドロワーナビゲーター
  * @description 認証済みユーザー向けのメインナビゲーション。
@@ -76,7 +85,7 @@ export default function DrawerNavigator() {
       {/* 一般ユーザー向け画面 */}
       <Drawer.Screen
         name="サンドボックス"
-        component={withErrorBoundary(SandboxScreen)}
+        component={SafeSandboxScreen}
         options={{
           title: 'サンドボックス（事前確認）',
           drawerLabel: 'サンドボックス',
@@ -84,7 +93,7 @@ export default function DrawerNavigator() {
       />
       <Drawer.Screen
         name="提出"
-        component={withErrorBoundary(SubmitScreen)}
+        component={SafeSubmitScreen}
         options={{
           title: '正式提出',
           drawerLabel: '正式提出',
@@ -92,7 +101,7 @@ export default function DrawerNavigator() {
       />
       <Drawer.Screen
         name="履歴"
-        component={withErrorBoundary(HistoryScreen)}
+        component={SafeHistoryScreen}
         options={{
           title: '提出履歴',
           drawerLabel: '提出履歴',
@@ -104,7 +113,7 @@ export default function DrawerNavigator() {
         <>
           <Drawer.Screen
             name="ダッシュボード"
-            component={withErrorBoundary(DashboardScreen)}
+            component={SafeDashboardScreen}
             options={{
               title: '審査ダッシュボード',
               drawerLabel: 'ダッシュボード',
@@ -112,7 +121,7 @@ export default function DrawerNavigator() {
           />
           <Drawer.Screen
             name="ルール"
-            component={withErrorBoundary(RuleListScreen)}
+            component={SafeRuleListScreen}
             options={{
               title: 'ルール管理',
               drawerLabel: 'ルール管理',
@@ -121,7 +130,7 @@ export default function DrawerNavigator() {
           {isAdmin && (
             <Drawer.Screen
               name="マスタ"
-              component={withErrorBoundary(MasterScreen)}
+              component={SafeMasterScreen}
               options={{
                 title: 'マスタ管理',
                 drawerLabel: 'マスタ管理',
@@ -130,7 +139,7 @@ export default function DrawerNavigator() {
           )}
           <Drawer.Screen
             name="設定"
-            component={withErrorBoundary(SettingsScreen)}
+            component={SafeSettingsScreen}
             options={{
               title: 'システム設定',
               drawerLabel: '設定',
