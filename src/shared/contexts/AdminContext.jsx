@@ -136,6 +136,14 @@ export function AdminProvider({ children }) {
   }, []);
 
   /**
+   * エラーメッセージをクリア
+   * @description 再試行時に前回のエラーを消すために使用。
+   */
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  /**
    * 全 screen 権限をクリア（一般ユーザーに戻る）
    * @description ログアウトせずに管理者権限のみ解除する。
    *              DB への書き込みは不要（セッション state のみ）。
@@ -154,6 +162,7 @@ export function AdminProvider({ children }) {
     isReviewer,
     verifying,
     error,
+    clearError,
     verifyPassword,
     clearScreens,
   };

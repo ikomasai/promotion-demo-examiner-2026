@@ -51,7 +51,7 @@ const ROLE_OPTIONS = [
  * @returns {React.ReactElement}
  */
 export default function AdminPasswordModal({ visible, onClose, onSuccess }) {
-  const { verifyPassword, verifying, error } = useAdmin();
+  const { verifyPassword, verifying, error, clearError } = useAdmin();
   const [selectedRole, setSelectedRole] = useState('koho');
   const [password, setPassword] = useState('');
 
@@ -60,6 +60,7 @@ export default function AdminPasswordModal({ visible, onClose, onSuccess }) {
    */
   const handleVerify = async () => {
     if (!password.trim()) return;
+    clearError();
 
     const success = await verifyPassword(selectedRole, password);
     if (success) {
@@ -137,7 +138,7 @@ export default function AdminPasswordModal({ visible, onClose, onSuccess }) {
               onPress={handleClose}
               disabled={verifying}
             >
-              <Text style={styles.cancelButtonText}>キャンセル</Text>
+              <Text style={styles.cancelButtonText}>スキップ</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.verifyButton, !password.trim() && styles.buttonDisabled]}

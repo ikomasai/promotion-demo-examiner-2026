@@ -5,23 +5,30 @@
  * @module navigation/AppNavigator
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../shared/contexts/AuthContext';
 import LoadingSpinner from '../shared/components/LoadingSpinner';
 import LoginScreen from '../features/auth/screens/LoginScreen';
 import DrawerNavigator from './DrawerNavigator';
+import AdminPasswordModal from '../features/auth/components/AdminPasswordModal';
 
 /**
  * アプリナビゲーター
  * @description 認証状態に基づくルーティングのルートコンポーネント
  *              - loading: ローディングスピナー表示
  *              - 未認証: LoginScreen 表示
- *              - 認証済: DrawerNavigator 表示
+ *              - 認証済: AdminPasswordModal (overlay) + DrawerNavigator 表示
  * @returns {React.ReactElement}
  */
 export default function AppNavigator() {
   const { user, loading } = useAuth();
+  const [adminModalDismissed, setAdminModalDismissed] = useState(false);
+
+  // ログアウト時にリセット（次回ログイン時に再表示）
+  useEffect(() => {
+    if (!user) setAdminModalDismissed(false);
+  }, [user]);
 
   // 認証状態確認中
   if (loading) {
@@ -33,10 +40,17 @@ export default function AppNavigator() {
     return <LoginScreen />;
   }
 
-  // 認証済: ドロワーナビゲーション
+  // 認証済: ドロワーナビゲーション + 管理者認証モーダル
   return (
-    <NavigationContainer>
-      <DrawerNavigator />
-    </NavigationContainer>
+    <>
+      <NavigationContainer>
+        <DrawerNavigator />
+      </NavigationContainer>
+      <AdminPasswordModal
+        visible={!adminModalDismissed}
+        onClose={() => setAdminModalDismissed(true)}
+        onSuccess={() => setAdminModalDismissed(true)}
+      />
+    </>
   );
 }
