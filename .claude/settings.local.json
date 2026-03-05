@@ -22,7 +22,8 @@
       "Bash(gh run:*)",
       "Bash(npm list:*)",
       "Bash(npm run:*)",
-      "Bash(gh issue:*)"
+      "Bash(gh issue:*)",
+      "Bash(git rm:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
