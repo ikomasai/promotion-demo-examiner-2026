@@ -26,7 +26,6 @@ import { isAllowedDomain } from '../utils/validateEmail';
  * @property {boolean} loading - 読み込み中フラグ
  * @property {string|null} error - エラーメッセージ
  * @property {Function} signIn - Email/Password ログイン
- * @property {Function} signUp - 新規登録
  * @property {Function} signOut - ログアウト
  * @property {Function} refreshProfile - プロフィール再取得
  */
@@ -57,15 +56,13 @@ export function AuthProvider({ children }) {
       const displayName = authUser.email?.split('@')[0] || '';
 
       // 1. user_profiles（共有テーブル）に upsert
-      const { error: userProfileError } = await supabase
-        .from('user_profiles')
-        .upsert(
-          {
-            user_id: authUser.id,
-            name: displayName,
-          },
-          { onConflict: 'user_id' }
-        );
+      const { error: userProfileError } = await supabase.from('user_profiles').upsert(
+        {
+          user_id: authUser.id,
+          name: displayName,
+        },
+        { onConflict: 'user_id' },
+      );
 
       if (userProfileError) {
         console.error('user_profiles upsert エラー:', userProfileError);
@@ -74,15 +71,13 @@ export function AuthProvider({ children }) {
       // 2. josenai_profiles（情宣固有テーブル）に初回のみ行作成
       //    ignoreDuplicates: true → 既存行がある場合はスキップ（既存データを上書きしない）
       //    初回ログイン時のみ sandbox_count_today=0 で行を作成する意図
-      await supabase
-        .from('josenai_profiles')
-        .upsert(
-          {
-            user_id: authUser.id,
-            sandbox_count_today: 0,
-          },
-          { onConflict: 'user_id', ignoreDuplicates: true }
-        );
+      await supabase.from('josenai_profiles').upsert(
+        {
+          user_id: authUser.id,
+          sandbox_count_today: 0,
+        },
+        { onConflict: 'user_id', ignoreDuplicates: true },
+      );
 
       // 3. 最新データを select で取得
       const { data: josenaiProfile, error: josenaiError } = await supabase
@@ -146,49 +141,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
-   * 新規登録
-   * @description @kindai.ac.jp ドメインのみ許可
-   * @param {string} email
-   * @param {string} password
-   */
-  const signUp = useCallback(async (email, password) => {
-    setError(null);
-
-    if (!isAllowedDomain(email)) {
-      setError('@kindai.ac.jp のメールアドレスを使用してください。');
-      return 'error';
-    }
-
-    try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) {
-        if (authError.message?.includes('already registered')) {
-          setError('このメールアドレスは既に登録されています。');
-        } else {
-          setError('登録に失敗しました: ' + authError.message);
-        }
-        console.error('signUp エラー:', authError);
-        return 'error';
-      }
-
-      // session が null = メール確認待ち（Confirm email 有効時）
-      // session が存在 = 自動ログイン（Confirm email 無効時 → onAuthStateChange が処理）
-      if (!data.session) {
-        return 'confirmation_required';
-      }
-      return 'ok';
-    } catch (err) {
-      setError('登録処理中にエラーが発生しました。');
-      console.error('signUp 例外:', err);
-      return 'error';
-    }
-  }, []);
-
-  /**
    * ログアウト
    */
   const signOut = useCallback(async () => {
@@ -216,26 +168,29 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mounted) return;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
 
-        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session?.user) {
-          if (!isAllowedDomain(session.user.email)) {
-            setError('@kindai.ac.jp のメールアドレスでログインしてください。');
-            supabase.auth.signOut();
-            return;
-          }
-          setUser(session.user);
-          setError(null);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setProfile(null);
+      if (
+        (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') &&
+        session?.user
+      ) {
+        if (!isAllowedDomain(session.user.email)) {
+          setError('@kindai.ac.jp のメールアドレスでログインしてください。');
+          supabase.auth.signOut();
+          return;
         }
-
-        setLoading(false);
+        setUser(session.user);
+        setError(null);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
       }
-    );
+
+      setLoading(false);
+    });
 
     return () => {
       mounted = false;
@@ -256,10 +211,12 @@ export function AuthProvider({ children }) {
       if (!cancelled) setProfile(p);
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, fetchOrCreateProfile]);
 
-  const value = { user, profile, loading, error, signIn, signUp, signOut, refreshProfile };
+  const value = { user, profile, loading, error, signIn, signOut, refreshProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

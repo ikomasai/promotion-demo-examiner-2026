@@ -6,12 +6,25 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { useAuth } from '../shared/contexts/AuthContext';
 import LoadingSpinner from '../shared/components/LoadingSpinner';
 import LoginScreen from '../features/auth/screens/LoginScreen';
 import DrawerNavigator from './DrawerNavigator';
 import AdminPasswordModal from '../features/auth/components/AdminPasswordModal';
+
+/** アプリ全体のダークテーマ（React Navigation 用） */
+const AppTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#1a1a2e',
+    card: '#1a1a2e',
+    text: '#ffffff',
+    border: '#2d2d44',
+    primary: '#4dabf7',
+  },
+};
 
 /**
  * アプリナビゲーター
@@ -43,7 +56,7 @@ export default function AppNavigator() {
   // 認証済: ドロワーナビゲーション + 管理者認証モーダル
   return (
     <>
-      <NavigationContainer>
+      <NavigationContainer theme={AppTheme}>
         <DrawerNavigator />
       </NavigationContainer>
       <AdminPasswordModal

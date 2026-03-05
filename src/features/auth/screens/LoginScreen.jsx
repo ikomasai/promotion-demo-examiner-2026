@@ -1,7 +1,6 @@
 /**
  * @fileoverview ログイン画面 - Email/Password 認証
  * @description @kindai.ac.jp ドメインのみ許可する認証画面。
- *              ログイン / 新規登録 タブ切替式。
  * @module features/auth/screens/LoginScreen
  */
 
@@ -19,25 +18,22 @@ import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { ALLOWED_DOMAIN } from '../../../shared/utils/validateEmail';
 
 /**
- * ログイン / 新規登録画面
+ * ログイン画面
  * @returns {React.ReactElement}
  */
 export default function LoginScreen() {
-  const { signIn, signUp, error } = useAuth();
+  const { signIn, error } = useAuth();
   const { isMobile } = useResponsive();
 
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
 
   const displayError = localError || error;
 
   const handleSubmit = async () => {
     setLocalError(null);
-    setSuccessMessage(null);
 
     // 空欄チェック
     if (!email.trim() || !password) {
@@ -45,38 +41,18 @@ export default function LoginScreen() {
       return;
     }
 
-    // ドメインチェック（両モード）
+    // ドメインチェック
     if (!email.trim().endsWith(ALLOWED_DOMAIN)) {
       setLocalError('@kindai.ac.jp のメールアドレスを使用してください。');
       return;
     }
 
-    // パスワード長チェック（登録時のみ）
-    if (mode === 'register' && password.length < 6) {
-      setLocalError('パスワードは6文字以上で入力してください。');
-      return;
-    }
-
     setLoading(true);
     try {
-      if (mode === 'login') {
-        await signIn(email.trim(), password);
-      } else {
-        const result = await signUp(email.trim(), password);
-        if (result === 'confirmation_required') {
-          setSuccessMessage('登録完了。ログインタブからログインしてください。');
-          setMode('login');
-        }
-      }
+      await signIn(email.trim(), password);
     } finally {
       setLoading(false);
     }
-  };
-
-  const switchMode = (newMode) => {
-    setMode(newMode);
-    setLocalError(null);
-    setSuccessMessage(null);
   };
 
   return (
@@ -85,26 +61,6 @@ export default function LoginScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, isMobile && styles.titleMobile]}>生駒祭 2026</Text>
         <Text style={styles.subtitle}>情宣AI判定システム</Text>
-      </View>
-
-      {/* タブ切替 */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          testID="tab-login"
-          style={[styles.tab, mode === 'login' && styles.tabActive]}
-          onPress={() => switchMode('login')}
-        >
-          <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>ログイン</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          testID="tab-register"
-          style={[styles.tab, mode === 'register' && styles.tabActive]}
-          onPress={() => switchMode('register')}
-        >
-          <Text style={[styles.tabText, mode === 'register' && styles.tabTextActive]}>
-            新規登録
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* フォーム */}
@@ -130,16 +86,9 @@ export default function LoginScreen() {
           placeholder="6文字以上"
           placeholderTextColor="#666"
           secureTextEntry
-          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          autoComplete="current-password"
           editable={!loading}
         />
-
-        {/* 成功メッセージ */}
-        {successMessage && (
-          <View style={styles.successContainer}>
-            <Text style={styles.successText}>{successMessage}</Text>
-          </View>
-        )}
 
         {/* エラーメッセージ */}
         {displayError && (
@@ -159,7 +108,7 @@ export default function LoginScreen() {
           {loading ? (
             <ActivityIndicator color="#ffffff" size="small" />
           ) : (
-            <Text style={styles.submitButtonText}>{mode === 'login' ? 'ログイン' : '登録'}</Text>
+            <Text style={styles.submitButtonText}>ログイン</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -196,30 +145,6 @@ const styles = StyleSheet.create({
     color: '#4dabf7',
     fontWeight: '500',
   },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 24,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#4dabf7',
-  },
-  tab: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: 'transparent',
-  },
-  tabActive: {
-    backgroundColor: '#4dabf7',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4dabf7',
-  },
-  tabTextActive: {
-    color: '#ffffff',
-  },
   form: {
     width: '100%',
     maxWidth: 360,
@@ -241,19 +166,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffffff',
     marginBottom: 16,
-  },
-  successContainer: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderWidth: 1,
-    borderColor: '#4caf50',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  successText: {
-    color: '#4caf50',
-    fontSize: 14,
-    textAlign: 'center',
   },
   errorContainer: {
     backgroundColor: 'rgba(244, 67, 54, 0.1)',
