@@ -2,7 +2,7 @@
  * @fileoverview 正式提出 Edge Function
  * @description 情宣物の正式提出エンドポイント。
  *              precheck=true: AI判定のみ（Drive/DB保存なし）
- *              precheck=false: Drive アップロード → AI 判定 → DB INSERT → 自動承認判定
+ *              precheck=false: AI 判定 → Drive アップロード → DB INSERT → 自動承認判定
  * @module supabase/functions/submit
  */
 
@@ -33,9 +33,10 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: '認証が必要です' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      extractToken(authHeader),
-    );
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(extractToken(authHeader));
 
     if (authError || !user) {
       return jsonResponse({ error: '認証に失敗しました' }, 401);
@@ -61,10 +62,17 @@ serve(async (req: Request): Promise<Response> => {
       supabaseAdmin
         .from('josenai_app_settings')
         .select('key, value')
-        .in('key', ['submission_enabled', 'ai_timeout_seconds', 'auto_approve_enabled', 'auto_approve_threshold'])
+        .in('key', [
+          'submission_enabled',
+          'ai_timeout_seconds',
+          'auto_approve_enabled',
+          'auto_approve_threshold',
+        ]),
     );
 
-    const settingsMap = new Map((settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
+    const settingsMap = new Map(
+      (settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]),
+    );
     const timeoutSeconds = parseInt(settingsMap.get('ai_timeout_seconds') ?? '30', 10);
 
     // 4. 提出受付チェック
@@ -94,9 +102,9 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // ─── 正式提出モード: Drive + AI + DB + 自動承認 ───
+    // ─── 正式提出モード: AI 判定 → Drive アップロード → DB + 自動承認 ───
 
-    // 6. 団体名取得（Drive フォルダパスに使用）
+    // 6. 団体名取得（Drive フォルダパス・ファイル名に使用）
     const { data: org, error: orgError } = await supabaseAdmin
       .from('josenai_organizations')
       .select('organization_name')
@@ -107,7 +115,36 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: '団体情報の取得に失敗しました' }, 404);
     }
 
-    // 7. Google Drive アップロード
+    // 7. 企画名取得（Drive ファイル名に使用）
+    const { data: proj, error: projError } = await supabaseAdmin
+      .from('josenai_projects')
+      .select('project_name')
+      .eq('id', projectId)
+      .single();
+
+    if (projError || !proj) {
+      return jsonResponse({ error: '企画情報の取得に失敗しました' }, 404);
+    }
+
+    // 8. AI 判定（タイムアウト付き） ※ スコアをファイル名に含めるため Drive アップロード前に実行
+    const checkItems = await fetchActiveCheckItems(supabaseAdmin);
+    let aiResult: GeminiResult;
+    if (!checkItems) {
+      console.error('チェック項目取得失敗、AI判定をスキップ');
+      aiResult = { skipped: true, reason: 'api_error', ai_risk_score: null, ai_risk_details: null };
+    } else {
+      aiResult = await analyzeWithTimeout(fileBytes, mimeType, checkItems, timeoutSeconds);
+    }
+
+    // 9. Drive ファイル名構築: 団体名-企画名-提出先-(スコア%).拡張子
+    const destLabel = submissionType === 'kikaku' ? '企画管理部' : '広報部';
+    const scoreLabel =
+      aiResult.ai_risk_score !== null ? `(${aiResult.ai_risk_score}%)` : '(判定なし)';
+    const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
+    const sanitize = (s: string) => s.replace(/[\/\\:*?"<>|]/g, '_');
+    const driveFileName = `${sanitize(org.organization_name)}-${sanitize(proj.project_name)}-${sanitize(destLabel)}-${scoreLabel}${ext}`;
+
+    // 10. Google Drive アップロード
     let driveFileId: string | null = null;
     let driveFileUrl: string | null = null;
 
@@ -119,12 +156,13 @@ serve(async (req: Request): Promise<Response> => {
       }
 
       // フォルダパス構築
-      const folderPath = submissionType === 'kikaku'
-        ? ['生駒祭2026', '企画物', org.organization_name]
-        : ['生駒祭2026', 'SNS', org.organization_name];
+      const folderPath =
+        submissionType === 'kikaku'
+          ? ['生駒祭2026', '企画物', org.organization_name]
+          : ['生駒祭2026', 'SNS', org.organization_name];
 
       const folderId = await ensureFolder(accessToken, folderPath, rootFolderId);
-      driveFileId = await uploadFile(accessToken, fileBytes, mimeType, file.name, folderId);
+      driveFileId = await uploadFile(accessToken, fileBytes, mimeType, driveFileName, folderId);
       driveFileUrl = await shareFile(accessToken, driveFileId);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
@@ -136,38 +174,28 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: 'ファイルのアップロードに失敗しました' }, 500);
     }
 
-    // 8. AI 判定（タイムアウト付き）
-    const checkItems = await fetchActiveCheckItems(supabaseAdmin);
-    let aiResult: GeminiResult;
-    if (!checkItems) {
-      console.error('チェック項目取得失敗、AI判定をスキップ');
-      aiResult = { skipped: true, reason: 'api_error', ai_risk_score: null, ai_risk_details: null };
-    } else {
-      aiResult = await analyzeWithTimeout(fileBytes, mimeType, checkItems, timeoutSeconds);
-    }
-
-    // 9. DB INSERT (josenai_submissions)
+    // 11. DB INSERT (josenai_submissions)
     const { data: submission, error: insertError } = await withRetry(() =>
       supabaseAdmin
         .from('josenai_submissions')
         .insert({
-        user_id: user.id,
-        organization_id: organizationId,
-        project_id: projectId,
-        submission_type: submissionType,
-        media_type: mediaType,
-        file_name: file.name,
-        file_size_bytes: fileBytes.length,
-        drive_file_id: driveFileId,
-        drive_file_url: driveFileUrl,
-        ai_risk_score: aiResult.ai_risk_score,
-        ai_risk_details: aiResult.ai_risk_details,
-        user_comment: userComment || null,
-        status: 'pending',
-        version: 1,
-      })
-      .select('id')
-      .single()
+          user_id: user.id,
+          organization_id: organizationId,
+          project_id: projectId,
+          submission_type: submissionType,
+          media_type: mediaType,
+          file_name: file.name,
+          file_size_bytes: fileBytes.length,
+          drive_file_id: driveFileId,
+          drive_file_url: driveFileUrl,
+          ai_risk_score: aiResult.ai_risk_score,
+          ai_risk_details: aiResult.ai_risk_details,
+          user_comment: userComment || null,
+          status: 'pending',
+          version: 1,
+        })
+        .select('id')
+        .single(),
     );
 
     if (insertError || !submission) {
@@ -185,7 +213,7 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: '提出データの保存に失敗しました' }, 500);
     }
 
-    // 10. 自動承認判定
+    // 12. 自動承認判定
     let autoApproved = false;
     const autoApproveEnabled = settingsMap.get('auto_approve_enabled') === 'true';
     const autoApproveThreshold = parseInt(settingsMap.get('auto_approve_threshold') ?? '10', 10);
@@ -214,7 +242,7 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // 11. レスポンス
+    // 13. レスポンス
     return jsonResponse({
       success: true,
       submission_id: submission.id,

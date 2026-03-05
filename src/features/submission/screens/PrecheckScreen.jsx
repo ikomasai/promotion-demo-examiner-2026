@@ -1,8 +1,8 @@
 /**
- * @fileoverview サンドボックス画面 - 事前確認機能
+ * @fileoverview 事前チェック画面 - 事前確認機能
  * @description AI判定を事前に試行できる画面（1日3回まで）。
  *              フォーム入力 → AI判定実行 → 結果表示の3フェーズ管理。
- * @module features/submission/screens/SandboxScreen
+ * @module features/submission/screens/PrecheckScreen
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -10,23 +10,23 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionForm from '../components/SubmissionForm';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
-import { useSandbox } from '../hooks/useSandbox';
+import { usePrecheck } from '../hooks/usePrecheck';
 
 /**
- * サンドボックス画面
+ * 事前チェック画面
  * @description 事前確認機能のメイン画面
  *              phase: 'form' → 'executing' → 'result'
  */
-export default function SandboxScreen() {
+export default function PrecheckScreen() {
   const {
     remainingCount,
     isLimitReached,
     executing,
     result,
     error,
-    executeSandbox,
+    executePrecheck,
     clearResult,
-  } = useSandbox();
+  } = usePrecheck();
 
   const { isMobile } = useResponsive();
 
@@ -73,11 +73,11 @@ export default function SandboxScreen() {
   }, [result, error, executing]);
 
   /**
-   * フォーム送信 → サンドボックス実行
+   * フォーム送信 → 事前チェック実行
    */
   const handleSubmit = useCallback((formData) => {
-    executeSandbox(formData);
-  }, [executeSandbox]);
+    executePrecheck(formData);
+  }, [executePrecheck]);
 
   /**
    * リセット → フォームフェーズに戻る
@@ -114,7 +114,7 @@ export default function SandboxScreen() {
     <ScrollView style={styles.container} contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}>
       {/* ヘッダー */}
       <View style={styles.header}>
-        <Text style={styles.title}>サンドボックス（事前確認）</Text>
+        <Text style={styles.title}>事前チェック</Text>
         <View style={styles.counterBadge}>
           <Text style={styles.counterText}>
             残り: {remainingCount}回/本日
@@ -126,7 +126,7 @@ export default function SandboxScreen() {
       {isLimitReached && phase === 'form' && (
         <View style={styles.limitBanner}>
           <Text style={styles.limitText}>
-            本日のサンドボックス利用上限に達しました。明日（JST 0:00）にリセットされます。
+            本日の事前チェック利用上限に達しました。明日（JST 0:00）にリセットされます。
           </Text>
         </View>
       )}

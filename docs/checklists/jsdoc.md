@@ -52,7 +52,7 @@
 
 - [ ] CHK025 - @typedef によるカスタム型（Submission, Profile等）の要件が明記されているか？ [Completeness, Spec §データベース設計]
 - [ ] CHK026 - @enum で定義すべき列挙値（status, admin_role等）の要件が明確か？ [Clarity, Spec §ユーザー種別]
-- [ ] CHK027 - @constant で示す定数（サンドボックス上限等）の要件が仕様書にあるか？ [Completeness, Spec §app_settings テーブル]
+- [ ] CHK027 - @constant で示す定数（事前チェック上限等）の要件が仕様書にあるか？ [Completeness, Spec §app_settings テーブル]
 
 ## 使用例・サンプル要件 (Usage Example Requirements)
 

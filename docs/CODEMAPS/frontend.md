@@ -6,7 +6,7 @@
 | 画面名 | ファイル | ロール | 主要 Hook |
 |--------|---------|--------|-----------|
 | ログイン | `src/features/auth/screens/LoginScreen.jsx` | 未認証 | `useAuth()` |
-| サンドボックス | `src/features/submission/screens/SandboxScreen.jsx` | 全員 | `useSandbox()` |
+| 事前チェック | `src/features/submission/screens/PrecheckScreen.jsx` | 全員 | `usePrecheck()` |
 | 正式提出 | `src/features/submission/screens/SubmitScreen.jsx` | 全員 | `useSubmission()` |
 | 提出履歴 | `src/features/submission/screens/HistoryScreen.jsx` | 全員 | `useSubmissionHistory()`, `useSubmissionDelete()` |
 | 審査ダッシュボード | `src/features/review/screens/DashboardScreen.jsx` | レビューア | `useReviewSubmissions()`, `useReview()` |
@@ -20,7 +20,7 @@
 AppNavigator
 ├─ [未認証] LoginScreen + AdminPasswordModal (overlay)
 └─ [認証済] DrawerNavigator
-     ├─ サンドボックス（事前確認）  ← 全ユーザー
+     ├─ 事前チェック（事前確認）  ← 全ユーザー
      ├─ 正式提出
      ├─ 提出履歴
      ├─ 審査ダッシュボード         ← レビューア以上
@@ -53,7 +53,7 @@ src/features/
 ## Custom Hooks マッピング
 
 **Submission hooks** (`src/features/submission/hooks/`):
-- `useSandbox()` → sandbox Edge Function, 日次制限管理
+- `usePrecheck()` → sandbox Edge Function, 日次制限管理
 - `useSubmission()` → submit Edge Function, 5フェーズ (form→executing→risk_check→submitting→done)
 - `useSubmissionHistory()` → josenai_submissions SELECT
 - `useSubmissionDelete()` → delete-submission Edge Function

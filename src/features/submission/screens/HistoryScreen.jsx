@@ -51,10 +51,7 @@ export default function HistoryScreen() {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
 
-    const success = await deleteSubmission(
-      deleteTarget.id,
-      deleteTarget.drive_file_id,
-    );
+    const success = await deleteSubmission(deleteTarget.id, deleteTarget.drive_file_id);
 
     if (success) {
       showSuccess('提出を削除しました');
@@ -108,7 +105,7 @@ export default function HistoryScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyTitle}>提出履歴がありません</Text>
           <Text style={styles.emptyDescription}>
-            サンドボックスまたは正式提出画面から提出を行うと、{'\n'}
+            事前チェックまたは正式提出画面から提出を行うと、{'\n'}
             ここに履歴が表示されます。
           </Text>
         </View>

@@ -86,7 +86,7 @@ supabase functions deploy <function-name>   # 単一関数のデプロイ
 ### ナビゲーション
 
 React Navigation（Expo Router 不使用）。`@react-navigation/drawer` でロールベースの画面表示制御:
-- **全ユーザー**: サンドボックス、提出、履歴
+- **全ユーザー**: 事前チェック、提出、履歴
 - **レビューア** (koho/kikaku/admin): + ダッシュボード、ルール管理、設定
 - **管理者のみ**: + マスタ管理
 
@@ -115,7 +115,7 @@ src/
 | 関数名 | 機能 |
 |--------|------|
 | `submit` | ファイルアップロード → Google Drive → Gemini AI 判定 → DB 登録（最も複雑） |
-| `sandbox` | プレビュー専用 AI 判定（DB 書き込みなし、1日3回制限） |
+| `sandbox` | 事前チェック専用 AI 判定（DB 書き込みなし、1日3回制限） |
 | `delete-submission` | Drive + DB からの削除（所有者チェック付き） |
 | `verify-admin-password` | 管理者ロールの bcrypt パスワード検証 |
 | `update-password` | 管理者パスワード変更 |
@@ -137,7 +137,7 @@ src/
 - **スタイル**: React Native `StyleSheet.create()`、ダークテーマ（背景 #1a1a2e、アクセント #4dabf7）
 - **レスポンシブ**: `useResponsive()` フック — モバイル (<768px)、タブレット (768-1023px)、デスクトップ (>=1024px)
 - **JSDoc**: エクスポートされる関数・コンポーネントには日本語 JSDoc コメントを記述
-- **画面名**: 日本語（例: `"サンドボックス"`, `"提出"`）
+- **画面名**: 日本語（例: `"事前チェック"`, `"提出"`）
 
 ## 環境変数
 

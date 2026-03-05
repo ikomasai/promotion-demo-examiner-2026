@@ -15,8 +15,8 @@ import { isAllowedDomain } from '../utils/validateEmail';
  * @property {string} id - auth.users の user ID
  * @property {string} email - メールアドレス（auth.users から取得）
  * @property {string|null} displayName - 表示名（user_profiles.name）
- * @property {number} sandboxCountToday - 本日のサンドボックス使用回数
- * @property {string|null} sandboxCountDate - サンドボックスカウント日付
+ * @property {number} sandboxCountToday - 本日の事前チェック使用回数
+ * @property {string|null} sandboxCountDate - 事前チェックカウント日付
  */
 
 /**
@@ -106,7 +106,7 @@ export function AuthProvider({ children }) {
 
   /**
    * プロフィール再取得
-   * @description サンドボックス使用後など、最新データが必要な場合に呼び出す。
+   * @description 事前チェック使用後など、最新データが必要な場合に呼び出す。
    */
   const refreshProfile = useCallback(async () => {
     if (!user) return;

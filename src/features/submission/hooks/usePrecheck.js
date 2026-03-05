@@ -1,8 +1,8 @@
 /**
- * @fileoverview サンドボックス実行フック
- * @description サンドボックスの残回数管理と実行処理を提供。
+ * @fileoverview 事前チェック実行フック
+ * @description 事前チェックの残回数管理と実行処理を提供。
  *              AuthContext の profile.sandboxCountToday と連携。
- * @module features/submission/hooks/useSandbox
+ * @module features/submission/hooks/usePrecheck
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -17,18 +17,18 @@ function getTodayJST() {
 }
 
 /**
- * サンドボックス実行フック
+ * 事前チェック実行フック
  * @returns {{
  *   remainingCount: number,
  *   isLimitReached: boolean,
  *   executing: boolean,
  *   result: Object|null,
  *   error: string|null,
- *   executeSandbox: (formData: Object) => Promise<void>,
+ *   executePrecheck: (formData: Object) => Promise<void>,
  *   clearResult: () => void
  * }}
  */
-export function useSandbox() {
+export function usePrecheck() {
   const { profile, refreshProfile } = useAuth();
   const [dailyLimit, setDailyLimit] = useState(3);
   const [executing, setExecuting] = useState(false);
@@ -60,10 +60,10 @@ export function useSandbox() {
   const isLimitReached = remainingCount <= 0;
 
   /**
-   * サンドボックス実行
+   * 事前チェック実行
    * @param {{ organizationId, projectId, mediaType, submissionType, file }} formData
    */
-  const executeSandbox = useCallback(async (formData) => {
+  const executePrecheck = useCallback(async (formData) => {
     setExecuting(true);
     setError(null);
     setResult(null);
@@ -81,7 +81,7 @@ export function useSandbox() {
       });
 
       if (invokeError) {
-        setError(invokeError.message || 'サンドボックスの実行に失敗しました');
+        setError(invokeError.message || '事前チェックの実行に失敗しました');
         return;
       }
 
@@ -96,7 +96,7 @@ export function useSandbox() {
       await refreshProfile();
     } catch (err) {
       setError('予期しないエラーが発生しました');
-      console.error('executeSandbox error:', err);
+      console.error('executePrecheck error:', err);
     } finally {
       setExecuting(false);
     }
@@ -116,7 +116,7 @@ export function useSandbox() {
     executing,
     result,
     error,
-    executeSandbox,
+    executePrecheck,
     clearResult,
   };
 }

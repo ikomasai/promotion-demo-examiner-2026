@@ -44,28 +44,34 @@ export default function SettingsScreen() {
   /**
    * 設定値を更新（Toast 通知付き）
    */
-  const handleUpdateSetting = useCallback(async (key, value) => {
-    const result = await updateSetting(key, value);
-    if (result.success) {
-      showSuccess('設定を更新しました');
-    } else {
-      showError(result.error || '設定の更新に失敗しました');
-    }
-  }, [updateSetting, showSuccess, showError]);
+  const handleUpdateSetting = useCallback(
+    async (key, value) => {
+      const result = await updateSetting(key, value);
+      if (result.success) {
+        showSuccess('設定を更新しました');
+      } else {
+        showError(result.error || '設定の更新に失敗しました');
+      }
+    },
+    [updateSetting, showSuccess, showError],
+  );
 
   /**
    * 自動承認トグルのハンドラ
    * OFF→ON: モーダルで確認 / ON→OFF: 即座に更新
    */
-  const handleAutoApproveToggle = useCallback((value) => {
-    if (value === 'true') {
-      // OFF → ON: 免責モーダル表示
-      setShowAutoApproveModal(true);
-    } else {
-      // ON → OFF: 即座に無効化
-      handleUpdateSetting('auto_approve_enabled', 'false');
-    }
-  }, [handleUpdateSetting]);
+  const handleAutoApproveToggle = useCallback(
+    (value) => {
+      if (value === 'true') {
+        // OFF → ON: 免責モーダル表示
+        setShowAutoApproveModal(true);
+      } else {
+        // ON → OFF: 即座に無効化
+        handleUpdateSetting('auto_approve_enabled', 'false');
+      }
+    },
+    [handleUpdateSetting],
+  );
 
   /**
    * 自動承認モーダルで確認
@@ -107,9 +113,7 @@ export default function SettingsScreen() {
         {/* 閲覧専用バナー */}
         {isReadOnly && (
           <View style={styles.readOnlyBanner}>
-            <Text style={styles.readOnlyText}>
-              閲覧モード — 設定の変更には管理者権限が必要です
-            </Text>
+            <Text style={styles.readOnlyText}>閲覧モード — 設定の変更には管理者権限が必要です</Text>
           </View>
         )}
 
@@ -133,7 +137,7 @@ export default function SettingsScreen() {
           />
           <SettingItem
             type="number"
-            label="サンドボックス上限"
+            label="事前チェック上限"
             value={settings.sandbox_daily_limit}
             onValueChange={(v) => handleUpdateSetting('sandbox_daily_limit', v)}
             disabled={isReadOnly || updating}

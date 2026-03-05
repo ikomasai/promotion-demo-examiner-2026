@@ -1,5 +1,5 @@
 /**
- * @fileoverview サンドボックス Edge Function
+ * @fileoverview 事前チェック Edge Function
  * @description AI判定を事前に試行できるエンドポイント（1日3回まで、データ保存なし）。
  *              認証 → 日次制限チェック → Gemini AI 判定 → カウント更新 → 結果返却。
  * @module supabase/functions/sandbox
@@ -32,9 +32,10 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: '認証が必要です' }, 401);
     }
 
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      extractToken(authHeader),
-    );
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(extractToken(authHeader));
 
     if (authError || !user) {
       return jsonResponse({ error: '認証に失敗しました' }, 401);
@@ -57,10 +58,12 @@ serve(async (req: Request): Promise<Response> => {
       supabaseAdmin
         .from('josenai_app_settings')
         .select('key, value')
-        .in('key', ['sandbox_daily_limit', 'ai_timeout_seconds'])
+        .in('key', ['sandbox_daily_limit', 'ai_timeout_seconds']),
     );
 
-    const settingsMap = new Map((settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
+    const settingsMap = new Map(
+      (settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]),
+    );
     const dailyLimit = parseInt(settingsMap.get('sandbox_daily_limit') ?? '3', 10);
     const timeoutSeconds = parseInt(settingsMap.get('ai_timeout_seconds') ?? '30', 10);
 
@@ -70,7 +73,7 @@ serve(async (req: Request): Promise<Response> => {
         .from('josenai_profiles')
         .select('sandbox_count_today, sandbox_count_date')
         .eq('user_id', user.id)
-        .single()
+        .single(),
     );
 
     if (profileError || !profile) {
@@ -78,16 +81,18 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const todayJST = getTodayJST();
-    const effectiveCount = profile.sandbox_count_date === todayJST
-      ? profile.sandbox_count_today
-      : 0;
+    const effectiveCount =
+      profile.sandbox_count_date === todayJST ? profile.sandbox_count_today : 0;
 
     // 5. 日次制限チェック
     if (effectiveCount >= dailyLimit) {
-      return jsonResponse({
-        error: '本日のサンドボックス利用上限に達しました',
-        remaining_today: 0,
-      }, 429);
+      return jsonResponse(
+        {
+          error: '本日の事前チェック利用上限に達しました',
+          remaining_today: 0,
+        },
+        429,
+      );
     }
 
     // 6. チェック項目取得
@@ -112,7 +117,7 @@ serve(async (req: Request): Promise<Response> => {
           sandbox_count_today: newCount,
           sandbox_count_date: todayJST,
         })
-        .eq('user_id', user.id)
+        .eq('user_id', user.id),
     );
 
     // 10. レスポンス返却

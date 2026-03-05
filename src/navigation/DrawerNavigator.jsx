@@ -12,7 +12,7 @@ import CustomDrawerContent from './components/CustomDrawerContent';
 import ScreenErrorBoundary from '../shared/components/ScreenErrorBoundary';
 
 // 画面コンポーネント（後続タスクで実装予定のプレースホルダー）
-import SandboxScreen from '../features/submission/screens/SandboxScreen';
+import PrecheckScreen from '../features/submission/screens/PrecheckScreen';
 import SubmitScreen from '../features/submission/screens/SubmitScreen';
 import HistoryScreen from '../features/submission/screens/HistoryScreen';
 import DashboardScreen from '../features/review/screens/DashboardScreen';
@@ -38,7 +38,7 @@ function withErrorBoundary(Component) {
 }
 
 // モジュールレベルで生成（レンダー毎に新しい参照が作られるのを防ぐ）
-const SafeSandboxScreen = withErrorBoundary(SandboxScreen);
+const SafePrecheckScreen = withErrorBoundary(PrecheckScreen);
 const SafeSubmitScreen = withErrorBoundary(SubmitScreen);
 const SafeHistoryScreen = withErrorBoundary(HistoryScreen);
 const SafeDashboardScreen = withErrorBoundary(DashboardScreen);
@@ -50,7 +50,7 @@ const SafeSettingsScreen = withErrorBoundary(SettingsScreen);
  * ドロワーナビゲーター
  * @description 認証済みユーザー向けのメインナビゲーション。
  *              screen 権限に応じてメニュー表示を制御:
- *              - 一般ユーザー: サンドボックス, 提出, 履歴
+ *              - 一般ユーザー: 事前チェック, 提出, 履歴
  *              - 審査権限保持者（koho/kikaku/admin）: + ダッシュボード, ルール, 設定
  *              - 管理者（admin）: + マスタ管理
  * @returns {React.ReactElement}
@@ -60,7 +60,7 @@ export default function DrawerNavigator() {
 
   return (
     <Drawer.Navigator
-      initialRouteName="サンドボックス"
+      initialRouteName="事前チェック"
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: {
@@ -84,11 +84,11 @@ export default function DrawerNavigator() {
     >
       {/* 一般ユーザー向け画面 */}
       <Drawer.Screen
-        name="サンドボックス"
-        component={SafeSandboxScreen}
+        name="事前チェック"
+        component={SafePrecheckScreen}
         options={{
-          title: 'サンドボックス（事前確認）',
-          drawerLabel: 'サンドボックス',
+          title: '事前チェック',
+          drawerLabel: '事前チェック',
         }}
       />
       <Drawer.Screen

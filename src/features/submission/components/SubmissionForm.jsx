@@ -1,7 +1,7 @@
 /**
- * @fileoverview 提出フォーム - サンドボックス/正式提出共通
+ * @fileoverview 提出フォーム - 事前チェック/正式提出共通
  * @description ファイルアップロードと入力フォームの共通コンポーネント。
- *              サンドボックス画面と正式提出画面で再利用。
+ *              事前チェック画面と正式提出画面で再利用。
  * @module features/submission/components/SubmissionForm
  */
 
@@ -32,7 +32,7 @@ import FileUploader from './FileUploader';
 
 /**
  * 提出フォーム
- * @description サンドボックスと正式提出で共通使用するフォーム
+ * @description 事前チェックと正式提出で共通使用するフォーム
  *              - 提出先選択（企画管理部/広報部）
  *              - 団体選択（OrganizationSelect）
  *              - 企画選択（ProjectSelect）
@@ -93,12 +93,7 @@ export default function SubmissionForm({
   };
 
   const isValid = () => {
-    return (
-      formData.organizationId &&
-      formData.projectId &&
-      formData.mediaType &&
-      formData.file
-    );
+    return formData.organizationId && formData.projectId && formData.mediaType && formData.file;
   };
 
   const isDisabled = loading || disabled;
@@ -127,10 +122,7 @@ export default function SubmissionForm({
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.radioButton,
-              formData.submissionType === 'koho' && styles.radioSelected,
-            ]}
+            style={[styles.radioButton, formData.submissionType === 'koho' && styles.radioSelected]}
             onPress={() => updateField('submissionType', 'koho')}
             disabled={isDisabled}
           >
@@ -190,16 +182,11 @@ export default function SubmissionForm({
 
       {/* 提出ボタン */}
       <TouchableOpacity
-        style={[
-          styles.submitButton,
-          (!isValid() || isDisabled) && styles.submitButtonDisabled,
-        ]}
+        style={[styles.submitButton, (!isValid() || isDisabled) && styles.submitButtonDisabled]}
         onPress={handleSubmit}
         disabled={!isValid() || isDisabled}
       >
-        <Text style={styles.submitButtonText}>
-          {loading ? '処理中...' : submitLabel}
-        </Text>
+        <Text style={styles.submitButtonText}>{loading ? '処理中...' : submitLabel}</Text>
       </TouchableOpacity>
     </View>
   );

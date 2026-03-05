@@ -62,7 +62,7 @@
 - [X] T015 [P] src/shared/components/ScreenErrorBoundary.jsx に ScreenErrorBoundary を作成
 - [X] T016 [P] src/shared/components/LoadingSpinner.jsx に LoadingSpinner を作成
 - [X] T017 [P] src/shared/components/PlaceholderContent.jsx に PlaceholderContent を作成
-- [X] T017a [P] src/features/submission/components/SubmissionForm.jsx に SubmissionForm 共通コンポーネントを作成（SandboxScreen と SubmitScreen で共用）
+- [X] T017a [P] src/features/submission/components/SubmissionForm.jsx に SubmissionForm 共通コンポーネントを作成（PrecheckScreen と SubmitScreen で共用）
 
 ### 2.5 認証機能
 
@@ -109,7 +109,7 @@
 
 ---
 
-## Phase 3: ユーザーストーリー 1 - サンドボックス（事前確認） (優先度: P1) 🎯 MVP
+## Phase 3: ユーザーストーリー 1 - 事前チェック（事前確認） (優先度: P1) 🎯 MVP
 
 **ゴール**: AI判定を事前に試行できる機能（1日3回まで）
 
@@ -117,8 +117,8 @@
 
 ### US1 の実装タスク
 
-- [x] T023 [US1] src/features/submission/screens/SandboxScreen.jsx に SandboxScreen を作成（提出先ドロップダウン、残回数表示）
-- [x] T023a [US1] SandboxScreen に AI スキップオプション UI を追加（タイムアウト/エラー時に「AI判定をスキップ」ボタンを表示）
+- [x] T023 [US1] src/features/submission/screens/PrecheckScreen.jsx に PrecheckScreen を作成（提出先ドロップダウン、残回数表示）
+- [x] T023a [US1] PrecheckScreen に AI スキップオプション UI を追加（タイムアウト/エラー時に「AI判定をスキップ」ボタンを表示）
 - [x] T024 [P] [US1] src/features/submission/components/FileUploader.jsx に FileUploader コンポーネントを作成（ドラッグ&ドロップ、ファイルバリデーション）
 - [x] T025 [P] [US1] src/features/submission/components/OrganizationSelect.jsx に OrganizationSelect コンポーネントを作成
 - [x] T026 [P] [US1] src/features/submission/components/ProjectSelect.jsx に ProjectSelect コンポーネントを作成（団体でフィルタリング）
@@ -127,12 +127,12 @@
 - [x] T029 [US1] src/features/submission/hooks/useOrganizations.js に useOrganizations フックを作成
 - [x] T030 [US1] src/features/submission/hooks/useProjects.js に useProjects フックを作成
 - [x] T031 [US1] src/features/submission/hooks/useMediaSpecs.js に useMediaSpecs フックを作成
-- [x] T032 [US1] src/features/submission/hooks/useSandbox.js に useSandbox フックを作成（josenai_profiles.sandbox_count_today 管理）
+- [x] T032 [US1] src/features/submission/hooks/usePrecheck.js に usePrecheck フックを作成（josenai_profiles.sandbox_count_today 管理）
 - [x] T033 [US1] supabase/functions/sandbox/index.ts に sandbox Edge Function を作成（Gemini API 連携、30秒タイムアウト、タイムアウト/エラー時は skipped: true を返す）
 - [x] T033a [US1] sandbox Edge Function にタイムアウト処理とフォールバックを追加（30秒タイムアウト、失敗時は skipped フラグ付き ai_risk_details を返す）
 - [x] T034 [P] [US1] supabase/functions/_shared/geminiClient.ts に geminiClient を作成
 
-**チェックポイント**: US1（サンドボックス）が独立して完全に動作・テスト可能であること
+**チェックポイント**: US1（事前チェック）が独立して完全に動作・テスト可能であること
 
 ---
 
@@ -284,7 +284,7 @@
 
 ### ユーザーストーリー依存関係
 
-- **US1（P1 - サンドボックス）**: Phase 2.7 完了後に開始可能 — 他ストーリーへの依存なし
+- **US1（P1 - 事前チェック）**: Phase 2.7 完了後に開始可能 — 他ストーリーへの依存なし
 - **US2（P2 - 正式提出）**: Phase 2.7 完了後に開始可能 — US1 のコンポーネントを再利用
 - **US3（P3 - 提出履歴）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
 - **US4（P4 - ダッシュボード）**: Phase 2.7 完了後に開始可能 — 独立テスト可能
@@ -309,7 +309,7 @@
 グループ D: T018, T019, T020（認証 UI） — T009 の後
 ```
 
-**Phase 3（US1 - サンドボックス）並列グループ:**
+**Phase 3（US1 - 事前チェック）並列グループ:**
 ```
 グループ A: T024, T025, T026, T027（入力コンポーネント）
 グループ B: T029, T030, T031（データフック）
@@ -319,7 +319,7 @@
 
 ---
 
-## 並列実行例: ユーザーストーリー 1（サンドボックス）
+## 並列実行例: ユーザーストーリー 1（事前チェック）
 
 ```bash
 # 全入力コンポーネントを同時に起動:
@@ -334,7 +334,7 @@
 タスク: T031 "src/features/submission/hooks/useMediaSpecs.js に useMediaSpecs フックを作成"
 
 # コンポーネントとフックの準備完了後:
-タスク: T023 "src/features/submission/screens/SandboxScreen.jsx に SandboxScreen を作成"
+タスク: T023 "src/features/submission/screens/PrecheckScreen.jsx に PrecheckScreen を作成"
 ```
 
 ---
@@ -346,15 +346,15 @@
 1. Phase 1: セットアップを完了
 2. Phase 2: 基盤構築を完了
 3. Phase 2.7: 共有 Supabase 移行を完了（重要 — 全ストーリーをブロック）
-4. Phase 3: US1（サンドボックス）を完了
-5. **停止して検証**: サンドボックスを独立テスト
+4. Phase 3: US1（事前チェック）を完了
+5. **停止して検証**: 事前チェックを独立テスト
 6. 準備ができればデプロイ/デモ
 
 ### インクリメンタルデリバリー
 
 1. セットアップ + 基盤構築を完了 → 基盤準備完了
 2. Phase 2.7: 移行を完了 → 共有 Supabase 整合
-3. US1（サンドボックス）追加 → テスト → デプロイ（MVP!）
+3. US1（事前チェック）追加 → テスト → デプロイ（MVP!）
 4. US2（正式提出）追加 → テスト → デプロイ
 5. US3（提出履歴）追加 → テスト → デプロイ
 6. US4（ダッシュボード）追加 → テスト → デプロイ
@@ -380,7 +380,7 @@
 | Phase 1: セットアップ | 4 | 2 |
 | Phase 2: 基盤構築 | 19 | 9 |
 | Phase 2.7: 移行 | 8 | 4 |
-| Phase 3: US1 - サンドボックス | 14 | 7 |
+| Phase 3: US1 - 事前チェック | 14 | 7 |
 | Phase 4: US2 - 正式提出 | 8 | 1 |
 | Phase 5: US3 - 提出履歴 | 9 | 4 |
 | Phase 6: US4 - ダッシュボード | 8 | 3 |

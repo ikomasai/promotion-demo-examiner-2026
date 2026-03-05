@@ -50,7 +50,7 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
  * @example
  * // プロフィール取得（RLS により自分のデータのみ取得可能）
  * // user_profiles: 共有ユーザー情報（名前・所属）
- * // josenai_profiles: 情宣固有データ（サンドボックス使用回数）
+ * // josenai_profiles: 情宣固有データ（事前チェック使用回数）
  * const { data: profile } = await supabase
  *   .from('josenai_profiles')
  *   .select('*')
