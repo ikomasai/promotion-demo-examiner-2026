@@ -1,0 +1,10 @@
+{
+  "extends": "expo",
+  "env": {
+    "browser": true
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": "off"
+  }
+}
