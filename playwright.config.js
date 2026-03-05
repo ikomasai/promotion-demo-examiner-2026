@@ -13,7 +13,7 @@ const config = {
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'npm run web',
+    command: 'pnpm run web',
     url: 'http://localhost:8081',
     timeout: 120000,
     reuseExistingServer: true,

@@ -17,7 +17,12 @@
       "mcp__playwright__browser_select_option",
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_file_upload",
-      "mcp__supabase__deploy_edge_function"
+      "mcp__supabase__deploy_edge_function",
+      "mcp__github__list_issues",
+      "Bash(gh run:*)",
+      "Bash(npm list:*)",
+      "Bash(npm run:*)",
+      "Bash(gh issue:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
