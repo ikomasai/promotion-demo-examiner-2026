@@ -36,7 +36,7 @@
 **開発ツール**:
 - `typescript` ^5.3.3, `@playwright/test` ^1.58.0, `@babel/core` ^7.24.0
 
-**パッケージマネージャ**: pnpm 10.30.3
+**パッケージマネージャ**: npm
 
 ## 環境変数マッピング
 
@@ -55,8 +55,8 @@
 **トリガー**: `main` ブランチ push / 手動実行
 
 ```
-checkout → setup pnpm → setup Node 20 (pnpm cache)
-  → pnpm install --frozen-lockfile
+checkout → setup Node 20 (npm cache)
+  → npm ci
   → expo export --platform web (環境変数注入)
   → configure GitHub Pages
   → upload artifact (dist/)
@@ -71,6 +71,6 @@ checkout → setup pnpm → setup Node 20 (pnpm cache)
 .github/workflows/deploy.yml   CI/CD パイプライン
 .env.example                    環境変数テンプレート
 app.json                        Expo 設定 (アプリ名: 生駒祭 情宣AI)
-package.json                    依存関係 (pnpm)
+package.json                    依存関係 (npm)
 supabase/config.toml            Supabase ローカル設定
 ```

@@ -1146,10 +1146,10 @@ Edge Function 側の処理:
 
 ```bash
 # Web版
-pnpm run web
+npm run web
 
 # または
-pnpm exec expo start --web
+npx expo start --web
 ```
 
 ### アクセス

@@ -11,10 +11,10 @@
 ## コマンド
 
 ```bash
-pnpm run web              # 開発サーバー起動（http://localhost:8081）
-pnpm run build:web        # 本番ビルド → dist/
-pnpm exec playwright test      # E2E テスト（開発サーバー自動起動）
-pnpm exec playwright test --ui # E2E テスト（インタラクティブ UI）
+npm run web              # 開発サーバー起動（http://localhost:8081）
+npm run build:web        # 本番ビルド → dist/
+npx playwright test      # E2E テスト（開発サーバー自動起動）
+npx playwright test --ui # E2E テスト（インタラクティブ UI）
 ```
 
 Edge Functions (Deno/TypeScript):
