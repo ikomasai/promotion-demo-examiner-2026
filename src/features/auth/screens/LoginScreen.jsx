@@ -90,14 +90,14 @@ export default function LoginScreen() {
       {/* タブ切替 */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
+          testID="tab-login"
           style={[styles.tab, mode === 'login' && styles.tabActive]}
           onPress={() => switchMode('login')}
         >
-          <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>
-            ログイン
-          </Text>
+          <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>ログイン</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          testID="tab-register"
           style={[styles.tab, mode === 'register' && styles.tabActive]}
           onPress={() => switchMode('register')}
         >
@@ -150,6 +150,7 @@ export default function LoginScreen() {
 
         {/* 送信ボタン */}
         <TouchableOpacity
+          testID="submit-button"
           style={[styles.submitButton, loading && styles.submitButtonDisabled]}
           onPress={handleSubmit}
           disabled={loading}
@@ -158,9 +159,7 @@ export default function LoginScreen() {
           {loading ? (
             <ActivityIndicator color="#ffffff" size="small" />
           ) : (
-            <Text style={styles.submitButtonText}>
-              {mode === 'login' ? 'ログイン' : '登録'}
-            </Text>
+            <Text style={styles.submitButtonText}>{mode === 'login' ? 'ログイン' : '登録'}</Text>
           )}
         </TouchableOpacity>
       </View>
