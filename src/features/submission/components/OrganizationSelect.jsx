@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { useOrganizations } from '../hooks/useOrganizations';
+import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/selectStyles';
 
 /**
  * 団体選択コンポーネント
@@ -16,14 +17,14 @@ export default function OrganizationSelect({ value, onChange, disabled }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={selectNativeStyles.loadingContainer}>
         <ActivityIndicator size="small" color="#4dabf7" />
       </View>
     );
   }
 
   if (error) {
-    return <Text style={styles.error}>{error}</Text>;
+    return <Text style={selectNativeStyles.error}>{error}</Text>;
   }
 
   return (
@@ -31,7 +32,7 @@ export default function OrganizationSelect({ value, onChange, disabled }) {
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={disabled}
-      style={styles.select}
+      style={selectInlineStyle}
     >
       <option value="">団体を選択してください</option>
       {organizations.map((org) => (
@@ -43,29 +44,3 @@ export default function OrganizationSelect({ value, onChange, disabled }) {
     </select>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    backgroundColor: '#2d2d44',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  error: {
-    color: '#f44336',
-    fontSize: 12,
-  },
-});
-
-// HTML select のインラインスタイル（StyleSheet は DOM 要素に適用不可）
-styles.select = {
-  width: '100%',
-  padding: '12px 16px',
-  backgroundColor: '#2d2d44',
-  color: '#fff',
-  border: '1px solid #3d3d5c',
-  borderRadius: '8px',
-  fontSize: '14px',
-  appearance: 'auto',
-  cursor: 'pointer',
-};

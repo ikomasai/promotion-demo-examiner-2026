@@ -8,6 +8,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
+import { formatDateJST } from '../../../shared/utils/dateFormat';
 import StatusBadge from './StatusBadge';
 
 /** submission_type の表示ラベル */
@@ -26,17 +27,6 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/**
- * UTC 日時を JST 表示用にフォーマット
- * @param {string} isoString
- * @returns {string}
- */
-function formatDateJST(isoString) {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  return d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
 }
 
 /**

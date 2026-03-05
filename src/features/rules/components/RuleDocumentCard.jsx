@@ -8,27 +8,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
+import { DOCUMENT_TYPE_CONFIG } from '../../../shared/constants/statusConfig';
+import { formatDateJST } from '../../../shared/utils/dateFormat';
 import SimpleMarkdown from './SimpleMarkdown';
-
-/**
- * document_type → バッジ情報
- */
-const TYPE_CONFIG = {
-  josenai_rule: { bg: '#1e3525', text: '#4caf50', label: 'ルール' },
-  copyright_guideline: { bg: '#3d3520', text: '#ff9800', label: '著作権' },
-  submission_guide: { bg: '#1e2d44', text: '#4dabf7', label: '提出ガイド' },
-};
-
-/**
- * 日時を JST 表示用にフォーマット
- * @param {string} isoString
- * @returns {string}
- */
-function formatDate(isoString) {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  return d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-}
 
 /**
  * ルール文書カード
@@ -40,7 +22,7 @@ function formatDate(isoString) {
  */
 export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit }) {
   const { isMobile } = useResponsive();
-  const typeConfig = TYPE_CONFIG[document.document_type] || TYPE_CONFIG.josenai_rule;
+  const typeConfig = DOCUMENT_TYPE_CONFIG[document.document_type] || DOCUMENT_TYPE_CONFIG.josenai_rule;
 
   return (
     <View style={[styles.card, isMobile && styles.cardMobile]}>
@@ -59,7 +41,7 @@ export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit 
 
       {/* 更新日時 */}
       <Text style={styles.updatedAt}>
-        最終更新: {formatDate(document.updated_at)}
+        最終更新: {formatDateJST(document.updated_at)}
       </Text>
 
       {/* 区切り線 */}

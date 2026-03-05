@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { useProjects } from '../hooks/useProjects';
+import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/selectStyles';
 
 /**
  * 企画選択コンポーネント
@@ -21,7 +22,7 @@ export default function ProjectSelect({ value, onChange, organizationId, disable
 
   if (!organizationId) {
     return (
-      <select disabled style={styles.select}>
+      <select disabled style={selectInlineStyle}>
         <option>団体を先に選択してください</option>
       </select>
     );
@@ -29,14 +30,14 @@ export default function ProjectSelect({ value, onChange, organizationId, disable
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={selectNativeStyles.loadingContainer}>
         <ActivityIndicator size="small" color="#4dabf7" />
       </View>
     );
   }
 
   if (error) {
-    return <Text style={styles.error}>{error}</Text>;
+    return <Text style={selectNativeStyles.error}>{error}</Text>;
   }
 
   return (
@@ -44,7 +45,7 @@ export default function ProjectSelect({ value, onChange, organizationId, disable
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={disabled}
-      style={styles.select}
+      style={selectInlineStyle}
     >
       <option value="">企画を選択してください</option>
       {projects.map((proj) => (
@@ -55,28 +56,3 @@ export default function ProjectSelect({ value, onChange, organizationId, disable
     </select>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    backgroundColor: '#2d2d44',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  error: {
-    color: '#f44336',
-    fontSize: 12,
-  },
-});
-
-styles.select = {
-  width: '100%',
-  padding: '12px 16px',
-  backgroundColor: '#2d2d44',
-  color: '#fff',
-  border: '1px solid #3d3d5c',
-  borderRadius: '8px',
-  fontSize: '14px',
-  appearance: 'auto',
-  cursor: 'pointer',
-};

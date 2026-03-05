@@ -6,19 +6,14 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-
-const STATUS_MAP = {
-  pending:  { bg: '#3d3520', text: '#ff9800', label: '審査中' },
-  approved: { bg: '#1e3525', text: '#4caf50', label: '承認済' },
-  rejected: { bg: '#3d1e1e', text: '#f44336', label: '却下' },
-};
+import { STATUS_CONFIG } from '../../../shared/constants/statusConfig';
 
 /**
  * ステータスバッジ
  * @param {{ status: 'pending'|'approved'|'rejected' }} props
  */
 export default React.memo(function StatusBadge({ status }) {
-  const config = STATUS_MAP[status] || STATUS_MAP.pending;
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
 
   return (
     <View style={[styles.badge, { backgroundColor: config.bg }]}>

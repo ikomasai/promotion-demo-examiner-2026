@@ -8,21 +8,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
+import { SUBMISSION_TYPE_CONFIG } from '../../../shared/constants/statusConfig';
+import { formatDateJST } from '../../../shared/utils/dateFormat';
 import StatusBadge from '../../submission/components/StatusBadge';
-
-/** 提出先バッジの設定 */
-const TYPE_CONFIG = {
-  koho: { bg: '#1e2d44', text: '#4dabf7', label: '広報部' },
-  kikaku: { bg: '#2d1e44', text: '#ab47bc', label: '企画管理部' },
-};
-
-/**
- * UTC → JST 表示
- */
-function formatDateJST(isoString) {
-  if (!isoString) return '';
-  return new Date(isoString).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-}
 
 /**
  * リスクスコアの色
@@ -48,7 +36,7 @@ function ReviewCard({ submission, onReview, onDetail }) {
   const { isMobile } = useResponsive();
   const orgName = submission.organization?.organization_name || '不明';
   const projName = submission.project?.project_name || '不明';
-  const typeConfig = TYPE_CONFIG[submission.submission_type] || TYPE_CONFIG.koho;
+  const typeConfig = SUBMISSION_TYPE_CONFIG[submission.submission_type] || SUBMISSION_TYPE_CONFIG.koho;
   const canReview = submission.status === 'pending';
   const autoApproved = isAutoApproved(submission);
 

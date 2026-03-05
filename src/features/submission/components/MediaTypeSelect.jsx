@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { useMediaSpecs } from '../hooks/useMediaSpecs';
+import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/selectStyles';
 
 /**
  * 媒体種別選択コンポーネント
@@ -28,14 +29,14 @@ export default function MediaTypeSelect({ value, onChange, disabled }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={selectNativeStyles.loadingContainer}>
         <ActivityIndicator size="small" color="#4dabf7" />
       </View>
     );
   }
 
   if (error) {
-    return <Text style={styles.error}>{error}</Text>;
+    return <Text style={selectNativeStyles.error}>{error}</Text>;
   }
 
   return (
@@ -43,7 +44,7 @@ export default function MediaTypeSelect({ value, onChange, disabled }) {
       value={value ?? ''}
       onChange={handleChange}
       disabled={disabled}
-      style={styles.select}
+      style={selectInlineStyle}
     >
       <option value="">媒体種別を選択してください</option>
       {mediaSpecs.map((spec) => (
@@ -54,28 +55,3 @@ export default function MediaTypeSelect({ value, onChange, disabled }) {
     </select>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    backgroundColor: '#2d2d44',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  error: {
-    color: '#f44336',
-    fontSize: 12,
-  },
-});
-
-styles.select = {
-  width: '100%',
-  padding: '12px 16px',
-  backgroundColor: '#2d2d44',
-  color: '#fff',
-  border: '1px solid #3d3d5c',
-  borderRadius: '8px',
-  fontSize: '14px',
-  appearance: 'auto',
-  cursor: 'pointer',
-};

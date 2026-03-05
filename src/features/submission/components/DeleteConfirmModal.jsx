@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { modalBaseStyles } from '../../../shared/styles/modalStyles';
 
 /**
  * 削除確認モーダル
@@ -26,26 +27,26 @@ export default function DeleteConfirmModal({ visible, submission, onConfirm, onC
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <Text style={styles.title}>提出を削除</Text>
+      <View style={modalBaseStyles.overlay}>
+        <View style={modalBaseStyles.modal}>
+          <Text style={modalBaseStyles.title}>提出を削除</Text>
 
           <Text style={styles.fileName} numberOfLines={2}>
             {submission?.file_name}
           </Text>
 
-          <Text style={styles.message}>
+          <Text style={modalBaseStyles.message}>
             この提出を削除しますか？{'\n'}
             この操作は取り消せません。
           </Text>
 
-          <View style={styles.actions}>
+          <View style={modalBaseStyles.actions}>
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={modalBaseStyles.cancelButton}
               onPress={onCancel}
               disabled={deleting}
             >
-              <Text style={styles.cancelText}>キャンセル</Text>
+              <Text style={modalBaseStyles.cancelText}>キャンセル</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -67,27 +68,6 @@ export default function DeleteConfirmModal({ visible, submission, onConfirm, onC
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  modal: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
   fileName: {
     fontSize: 14,
     color: '#e0e0e0',
@@ -96,30 +76,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
-  },
-  message: {
-    fontSize: 14,
-    color: '#a0a0a0',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#666',
-  },
-  cancelText: {
-    color: '#a0a0a0',
-    fontSize: 14,
-    fontWeight: '600',
   },
   deleteButton: {
     flex: 1,

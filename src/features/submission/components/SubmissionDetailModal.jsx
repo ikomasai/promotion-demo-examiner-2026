@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { formatDateJST } from '../../../shared/utils/dateFormat';
 import StatusBadge from './StatusBadge';
 import RiskScoreDisplay from './RiskScoreDisplay';
 
@@ -24,14 +25,6 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/**
- * UTC → JST 表示
- */
-function formatDateJST(isoString) {
-  if (!isoString) return '不明';
-  return new Date(isoString).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
 }
 
 /**
