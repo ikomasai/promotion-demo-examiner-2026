@@ -1,7 +1,6 @@
 /**
- * @fileoverview リトライ + エラーレスポンス共有ユーティリティ
- * @description 指数バックオフ + ジッター付きリトライと、
- *              標準化された JSON エラーレスポンス生成ヘルパー。
+ * @fileoverview リトライ共有ユーティリティ
+ * @description 指数バックオフ + ジッター付きリトライ。
  * @module supabase/functions/_shared/retry
  */
 
@@ -52,22 +51,3 @@ export async function withRetry<T>(
   throw lastError;
 }
 
-/**
- * 標準化された JSON エラーレスポンスを生成
- * @param message エラーメッセージ
- * @param status HTTP ステータスコード
- * @param corsHeaders CORS ヘッダー
- */
-export function errorResponse(
-  message: string,
-  status: number,
-  corsHeaders: Record<string, string>,
-): Response {
-  return new Response(
-    JSON.stringify({ error: message }),
-    {
-      status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    },
-  );
-}

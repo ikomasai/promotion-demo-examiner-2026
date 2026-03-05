@@ -7,27 +7,15 @@
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { supabaseAdmin, supabaseAnon } from '../_shared/supabase.ts';
-import { withRetry, errorResponse } from '../_shared/retry.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-/** JSON レスポンスヘルパー */
-function jsonResponse(body: Record<string, unknown>, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
+import { withRetry } from '../_shared/retry.ts';
+import { handleCors } from '../_shared/cors.ts';
+import { jsonResponse } from '../_shared/response.ts';
+import { extractToken, createUserClient } from '../_shared/auth.ts';
 
 serve(async (req: Request): Promise<Response> => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // 1. JWT 認証
@@ -37,7 +25,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(
-      authHeader.replace('Bearer ', ''),
+      extractToken(authHeader),
     );
 
     if (authError || !user) {
@@ -72,28 +60,21 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 5. 審査権限チェック
-    //    ユーザーの JWT をセットした client で fn_is_josenai_koho/kikaku を呼び出す
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-
-    // submission_type に応じた権限関数を呼び出す
+    const userClient = createUserClient(authHeader);
     let hasReviewPermission = false;
 
     if (submission.submission_type === 'koho') {
       const { data } = await userClient.rpc('fn_is_josenai_koho');
-      hasReviewPermission = !!data;
+      hasReviewPermission = data === true;
     } else if (submission.submission_type === 'kikaku') {
       const { data } = await userClient.rpc('fn_is_josenai_kikaku');
-      hasReviewPermission = !!data;
+      hasReviewPermission = data === true;
     }
 
     // admin は両方審査可能
     if (!hasReviewPermission) {
       const { data } = await userClient.rpc('fn_is_josenai_admin');
-      hasReviewPermission = !!data;
+      hasReviewPermission = data === true;
     }
 
     if (!hasReviewPermission) {
@@ -127,9 +108,9 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: 'version_conflict' }, 409);
     }
 
-    return jsonResponse({ success: true, submissionId: updated.id }, 200);
+    return jsonResponse({ success: true, submissionId: updated.id });
   } catch (err) {
     console.error('review error:', err);
-    return errorResponse('審査処理中にエラーが発生しました', 500, corsHeaders);
+    return jsonResponse({ error: '審査処理中にエラーが発生しました' }, 500);
   }
 });

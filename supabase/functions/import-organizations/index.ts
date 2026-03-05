@@ -7,14 +7,11 @@
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { supabaseAdmin } from '../_shared/supabase.ts';
 import { withRetry } from '../_shared/retry.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCors } from '../_shared/cors.ts';
+import { jsonResponse } from '../_shared/response.ts';
+import { createUserClient } from '../_shared/auth.ts';
 
 /** 必須ヘッダー（順序不問） */
 const REQUIRED_HEADERS = ['organization_code', 'organization_name', 'category'];
@@ -66,32 +63,21 @@ function parseCsv(text: string): Record<string, string>[] {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // 認証チェック
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: '認証が必要です' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: '認証が必要です' }, 401);
     }
 
     // 管理者権限チェック
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
+    const userClient = createUserClient(authHeader);
     const { data: isAdmin } = await userClient.rpc('fn_is_josenai_admin');
     if (!isAdmin) {
-      return new Response(
-        JSON.stringify({ success: false, error: '管理者権限が必要です' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: '管理者権限が必要です' }, 403);
     }
 
     // FormData からファイル取得
@@ -99,10 +85,7 @@ serve(async (req: Request): Promise<Response> => {
     const file = formData.get('file');
 
     if (!file || !(file instanceof File)) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'CSV ファイルが送信されていません' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: 'CSV ファイルが送信されていません' }, 400);
     }
 
     // CSV パース
@@ -128,22 +111,13 @@ serve(async (req: Request): Promise<Response> => {
 
     if (error) {
       console.error('UPSERT エラー:', error);
-      return new Response(
-        JSON.stringify({ success: false, error: `データベースエラー: ${error.message}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: `データベースエラー: ${error.message}` }, 500);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, count: data?.length ?? 0 }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ success: true, count: data?.length ?? 0 });
   } catch (err) {
     console.error('import-organizations エラー:', err);
     const message = err instanceof Error ? err.message : '予期しないエラーが発生しました';
-    return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ success: false, error: message }, 400);
   }
 });

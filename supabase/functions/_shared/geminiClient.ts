@@ -5,14 +5,10 @@
  * @module supabase/functions/_shared/geminiClient
  */
 
-/** チェック項目の型 */
-interface CheckItem {
-  item_code: string;
-  item_name: string;
-  description: string;
-  category: string;
-  risk_weight: number;
-}
+import type { CheckItem } from './checkItems.ts';
+
+// CheckItem を re-export（既存コードの互換性維持）
+export type { CheckItem } from './checkItems.ts';
 
 /** Gemini から返される個別判定結果 */
 interface ItemResult {
@@ -149,7 +145,7 @@ ${JSON.stringify(checkItemsForPrompt, null, 2)}
     console.error('Gemini API error:', response.status, errorText);
     return {
       skipped: true,
-      reason: `api_error:${response.status}:${errorText.slice(0, 200)}`,
+      reason: 'api_error',
       ai_risk_score: null,
       ai_risk_details: null,
     };
@@ -190,4 +186,39 @@ ${JSON.stringify(checkItemsForPrompt, null, 2)}
     ai_risk_score: aiRiskScore,
     ai_risk_details: results,
   };
+}
+
+/**
+ * タイムアウト付き Gemini AI 判定
+ * @description submit/sandbox で共通するタイムアウト + エラーハンドリングを統合
+ * @param fileBytes - ファイルのバイナリデータ
+ * @param mimeType - ファイルの MIME タイプ
+ * @param checkItems - チェック項目一覧
+ * @param timeoutSeconds - タイムアウト秒数
+ * @returns AI 判定結果（エラー時は skipped: true）
+ */
+export async function analyzeWithTimeout(
+  fileBytes: Uint8Array,
+  mimeType: string,
+  checkItems: CheckItem[],
+  timeoutSeconds: number,
+): Promise<GeminiResult> {
+  try {
+    const timeoutPromise = new Promise<GeminiResult>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), timeoutSeconds * 1000)
+    );
+    return await Promise.race([
+      analyzeWithGemini(fileBytes, mimeType, checkItems),
+      timeoutPromise,
+    ]);
+  } catch (err) {
+    const reason = err instanceof Error && err.message === 'timeout' ? 'timeout' : 'api_error';
+    console.error('AI判定エラー:', err);
+    return {
+      skipped: true,
+      reason,
+      ai_risk_score: null,
+      ai_risk_details: null,
+    };
+  }
 }

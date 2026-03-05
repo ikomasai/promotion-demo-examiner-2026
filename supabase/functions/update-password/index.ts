@@ -6,9 +6,11 @@
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 import { supabaseAdmin } from '../_shared/supabase.ts';
+import { handleCors } from '../_shared/cors.ts';
+import { jsonResponse } from '../_shared/response.ts';
+import { createUserClient, PASSWORD_KEYS } from '../_shared/auth.ts';
 
 /**
  * リクエストボディ型定義
@@ -20,86 +22,39 @@ interface UpdatePasswordRequest {
   newPassword: string;
 }
 
-/**
- * CORS ヘッダー
- */
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-/**
- * 設定キー名のマッピング
- */
-const PASSWORD_KEYS: Record<string, string> = {
-  koho: 'koho_admin_password_hash',
-  kikaku: 'kikaku_admin_password_hash',
-  super: 'super_admin_password_hash',
-};
-
 serve(async (req: Request): Promise<Response> => {
-  // CORS プリフライト対応
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // 認証チェック
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: '認証が必要です' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: '認証が必要です' }, 401);
     }
 
     // 管理者権限チェック
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
+    const userClient = createUserClient(authHeader);
     const { data: isAdmin } = await userClient.rpc('fn_is_josenai_admin');
     if (!isAdmin) {
-      return new Response(
-        JSON.stringify({ success: false, error: '管理者権限が必要です' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: '管理者権限が必要です' }, 403);
     }
 
     const { role, newPassword }: UpdatePasswordRequest = await req.json();
 
     // バリデーション: 必須チェック
     if (!role || !newPassword) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'role と newPassword は必須です' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return jsonResponse({ success: false, error: 'role と newPassword は必須です' }, 400);
     }
 
     // バリデーション: role 存在チェック
     if (!PASSWORD_KEYS[role]) {
-      return new Response(
-        JSON.stringify({ success: false, error: '無効な権限種別です' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return jsonResponse({ success: false, error: '無効な権限種別です' }, 400);
     }
 
     // バリデーション: 最低文字数
-    if (newPassword.length < 4) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'パスワードは4文字以上で入力してください' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    if (newPassword.length < 8) {
+      return jsonResponse({ success: false, error: 'パスワードは8文字以上で入力してください' }, 400);
     }
 
     // bcrypt でハッシュ生成
@@ -113,30 +68,12 @@ serve(async (req: Request): Promise<Response> => {
 
     if (updateError) {
       console.error('パスワード更新エラー:', updateError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'パスワードの更新に失敗しました' }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return jsonResponse({ success: false, error: 'パスワードの更新に失敗しました' }, 500);
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return jsonResponse({ success: true });
   } catch (err) {
     console.error('パスワード更新エラー:', err);
-    return new Response(
-      JSON.stringify({ success: false, error: '処理中にエラーが発生しました' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return jsonResponse({ success: false, error: '処理中にエラーが発生しました' }, 500);
   }
 });

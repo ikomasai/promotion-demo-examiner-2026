@@ -8,8 +8,12 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { supabaseAdmin } from '../_shared/supabase.ts';
-import { analyzeWithGemini, type GeminiResult } from '../_shared/geminiClient.ts';
-import { withRetry, errorResponse } from '../_shared/retry.ts';
+import { analyzeWithTimeout, type GeminiResult } from '../_shared/geminiClient.ts';
+import { withRetry } from '../_shared/retry.ts';
+import { handleCors } from '../_shared/cors.ts';
+import { jsonResponse } from '../_shared/response.ts';
+import { extractToken } from '../_shared/auth.ts';
+import { fetchActiveCheckItems } from '../_shared/checkItems.ts';
 import {
   getAccessToken,
   ensureFolder,
@@ -18,27 +22,9 @@ import {
   deleteFile,
 } from '../_shared/driveClient.ts';
 
-/** CORS ヘッダー */
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-/**
- * JSON レスポンスを生成
- */
-function jsonResponse(body: Record<string, unknown>, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
-
 serve(async (req: Request): Promise<Response> => {
-  // CORS プリフライト対応
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // 1. 認証: Authorization ヘッダーから JWT 検証
@@ -47,8 +33,9 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: '認証が必要です' }, 401);
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
+      extractToken(authHeader),
+    );
 
     if (authError || !user) {
       return jsonResponse({ error: '認証に失敗しました' }, 401);
@@ -92,38 +79,12 @@ serve(async (req: Request): Promise<Response> => {
 
     // ─── precheck モード: AI 判定のみ ───
     if (isPrecheck) {
-      // チェック項目取得
-      const { data: checkItems, error: checkError } = await supabaseAdmin
-        .from('josenai_check_items')
-        .select('item_code, item_name, description, category, risk_weight')
-        .eq('is_active', true)
-        .order('category')
-        .order('display_order');
-
-      if (checkError || !checkItems?.length) {
+      const checkItems = await fetchActiveCheckItems(supabaseAdmin);
+      if (!checkItems) {
         return jsonResponse({ error: 'チェック項目の取得に失敗しました' }, 500);
       }
 
-      // AI 判定（タイムアウト付き）
-      let result: GeminiResult;
-      try {
-        const timeoutPromise = new Promise<GeminiResult>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), timeoutSeconds * 1000)
-        );
-        result = await Promise.race([
-          analyzeWithGemini(fileBytes, mimeType, checkItems),
-          timeoutPromise,
-        ]);
-      } catch (err) {
-        const reason = err instanceof Error && err.message === 'timeout' ? 'timeout' : 'api_error';
-        console.error('AI判定エラー (precheck):', err);
-        result = {
-          skipped: true,
-          reason,
-          ai_risk_score: null,
-          ai_risk_details: null,
-        };
-      }
+      const result = await analyzeWithTimeout(fileBytes, mimeType, checkItems, timeoutSeconds);
 
       return jsonResponse({
         ai_risk_score: result.ai_risk_score,
@@ -176,31 +137,13 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 8. AI 判定（タイムアウト付き）
-    const { data: checkItems, error: checkError } = await supabaseAdmin
-      .from('josenai_check_items')
-      .select('item_code, item_name, description, category, risk_weight')
-      .eq('is_active', true)
-      .order('category')
-      .order('display_order');
-
+    const checkItems = await fetchActiveCheckItems(supabaseAdmin);
     let aiResult: GeminiResult;
-    if (checkError || !checkItems?.length) {
+    if (!checkItems) {
       console.error('チェック項目取得失敗、AI判定をスキップ');
       aiResult = { skipped: true, reason: 'api_error', ai_risk_score: null, ai_risk_details: null };
     } else {
-      try {
-        const timeoutPromise = new Promise<GeminiResult>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), timeoutSeconds * 1000)
-        );
-        aiResult = await Promise.race([
-          analyzeWithGemini(fileBytes, mimeType, checkItems),
-          timeoutPromise,
-        ]);
-      } catch (err) {
-        const reason = err instanceof Error && err.message === 'timeout' ? 'timeout' : 'api_error';
-        console.error('AI判定エラー:', err);
-        aiResult = { skipped: true, reason, ai_risk_score: null, ai_risk_details: null };
-      }
+      aiResult = await analyzeWithTimeout(fileBytes, mimeType, checkItems, timeoutSeconds);
     }
 
     // 9. DB INSERT (josenai_submissions)
@@ -283,6 +226,6 @@ serve(async (req: Request): Promise<Response> => {
     });
   } catch (err) {
     console.error('submit Edge Function エラー:', err);
-    return errorResponse('サーバーエラーが発生しました', 500, corsHeaders);
+    return jsonResponse({ error: 'サーバーエラーが発生しました' }, 500);
   }
 });

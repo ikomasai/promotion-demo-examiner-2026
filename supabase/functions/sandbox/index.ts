@@ -7,14 +7,12 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { supabaseAdmin } from '../_shared/supabase.ts';
-import { analyzeWithGemini, type GeminiResult } from '../_shared/geminiClient.ts';
-import { withRetry, errorResponse } from '../_shared/retry.ts';
-
-/** CORS ヘッダー */
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { analyzeWithTimeout } from '../_shared/geminiClient.ts';
+import { withRetry } from '../_shared/retry.ts';
+import { handleCors } from '../_shared/cors.ts';
+import { jsonResponse } from '../_shared/response.ts';
+import { extractToken } from '../_shared/auth.ts';
+import { fetchActiveCheckItems } from '../_shared/checkItems.ts';
 
 /**
  * JST での本日の日付を YYYY-MM-DD 形式で取得
@@ -23,21 +21,9 @@ function getTodayJST(): string {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
 }
 
-/**
- * JSON レスポンスを生成
- */
-function jsonResponse(body: Record<string, unknown>, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
-
 serve(async (req: Request): Promise<Response> => {
-  // CORS プリフライト対応
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // 1. 認証: Authorization ヘッダーから JWT 検証
@@ -46,8 +32,9 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: '認証が必要です' }, 401);
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
+      extractToken(authHeader),
+    );
 
     if (authError || !user) {
       return jsonResponse({ error: '認証に失敗しました' }, 401);
@@ -87,7 +74,7 @@ serve(async (req: Request): Promise<Response> => {
     );
 
     if (profileError || !profile) {
-      return errorResponse('プロフィールが見つかりません', 404, corsHeaders);
+      return jsonResponse({ error: 'プロフィールが見つかりません' }, 404);
     }
 
     const todayJST = getTodayJST();
@@ -104,14 +91,8 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // 6. チェック項目取得
-    const { data: checkItems, error: checkError } = await supabaseAdmin
-      .from('josenai_check_items')
-      .select('item_code, item_name, description, category, risk_weight')
-      .eq('is_active', true)
-      .order('category')
-      .order('display_order');
-
-    if (checkError || !checkItems?.length) {
+    const checkItems = await fetchActiveCheckItems(supabaseAdmin);
+    if (!checkItems) {
       return jsonResponse({ error: 'チェック項目の取得に失敗しました' }, 500);
     }
 
@@ -120,25 +101,7 @@ serve(async (req: Request): Promise<Response> => {
     const mimeType = file.type || 'application/octet-stream';
 
     // 8. Gemini AI 判定（タイムアウト付き）
-    let result: GeminiResult;
-    try {
-      const timeoutPromise = new Promise<GeminiResult>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), timeoutSeconds * 1000)
-      );
-      result = await Promise.race([
-        analyzeWithGemini(fileBytes, mimeType, checkItems),
-        timeoutPromise,
-      ]);
-    } catch (err) {
-      const reason = err instanceof Error && err.message === 'timeout' ? 'timeout' : 'api_error';
-      console.error('AI判定エラー:', err);
-      result = {
-        skipped: true,
-        reason,
-        ai_risk_score: null,
-        ai_risk_details: null,
-      };
-    }
+    const result = await analyzeWithTimeout(fileBytes, mimeType, checkItems, timeoutSeconds);
 
     // 9. カウント更新（アトミック UPDATE）
     const newCount = effectiveCount + 1;
@@ -162,6 +125,6 @@ serve(async (req: Request): Promise<Response> => {
     });
   } catch (err) {
     console.error('sandbox Edge Function エラー:', err);
-    return errorResponse('サーバーエラーが発生しました', 500, corsHeaders);
+    return jsonResponse({ error: 'サーバーエラーが発生しました' }, 500);
   }
 });
