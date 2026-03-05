@@ -1,0 +1,14 @@
+Codemap Generation Summary
+==========================
+Date: 2026-03-05
+Status: Initial generation (no previous codemaps)
+
+Files Generated:
+  docs/CODEMAPS/architecture.md  -  44 lines  (~650 tokens)  - Entry point, providers, RBAC, design system
+  docs/CODEMAPS/frontend.md      -  78 lines  (~900 tokens)  - 8 screens, 6 features, hooks, services
+  docs/CODEMAPS/backend.md       - 103 lines  (~850 tokens)  - 8 Edge Functions, 4 shared modules
+  docs/CODEMAPS/data.md          -  72 lines  (~800 tokens)  - 8 tables, RLS, indexes, migrations
+  docs/CODEMAPS/dependencies.md  -  76 lines  (~600 tokens)  - External services, npm, env vars, CI/CD
+
+Total: 5 files, 373 lines, ~3800 tokens estimated
+Files scanned: ~69 source files across frontend, backend, DB, and config
