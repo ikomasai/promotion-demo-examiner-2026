@@ -6,7 +6,14 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionForm from '../components/SubmissionForm';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
@@ -65,6 +72,10 @@ export default function SubmitScreen() {
   /** 高リスク時のユーザーコメント */
   const [userComment, setUserComment] = useState('');
 
+  /** 提出中ステップ進捗 */
+  const [submitStep, setSubmitStep] = useState(0);
+  const submitTimersRef = useRef([]);
+
   // preChecking 開始でフェーズ遷移
   useEffect(() => {
     if (preChecking) {
@@ -94,11 +105,19 @@ export default function SubmitScreen() {
     }
   }, [precheckResult, error, preChecking, phase]);
 
-  // submitting 状態でフェーズ遷移
+  // submitting 状態でフェーズ遷移 + ステップ進捗タイマー
   useEffect(() => {
     if (submitting) {
       setPhase('submitting');
+      setSubmitStep(0);
+      const delays = [3000, 7000, 10000]; // ステップ 1→2→3 への遷移タイミング
+      const timers = delays.map((delay, i) => setTimeout(() => setSubmitStep(i + 1), delay));
+      submitTimersRef.current = timers;
     }
+    return () => {
+      submitTimersRef.current.forEach(clearTimeout);
+      submitTimersRef.current = [];
+    };
   }, [submitting]);
 
   // submit 完了でフェーズ遷移
@@ -115,11 +134,14 @@ export default function SubmitScreen() {
   /**
    * フォーム送信 → AI プレチェック実行
    */
-  const handlePrecheck = useCallback((formData) => {
-    formDataRef.current = formData;
-    setUserComment('');
-    precheck(formData);
-  }, [precheck]);
+  const handlePrecheck = useCallback(
+    (formData) => {
+      formDataRef.current = formData;
+      setUserComment('');
+      precheck(formData);
+    },
+    [precheck],
+  );
 
   /**
    * 正式提出実行
@@ -203,11 +225,7 @@ export default function SubmitScreen() {
         {/* 高リスク: 理由入力 + 提出 */}
         {riskLevel === 'high' && (
           <>
-            <HighRiskReasonInput
-              value={userComment}
-              onChange={setUserComment}
-              disabled={false}
-            />
+            <HighRiskReasonInput value={userComment} onChange={setUserComment} disabled={false} />
             <TouchableOpacity
               style={[
                 styles.submitButton,
@@ -238,10 +256,20 @@ export default function SubmitScreen() {
         </TouchableOpacity>
       </View>
     );
-  }, [riskLevel, displayPrecheckResult, handleSubmit, handleReset, userComment, isHighRiskReasonValid]);
+  }, [
+    riskLevel,
+    displayPrecheckResult,
+    handleSubmit,
+    handleReset,
+    userComment,
+    isHighRiskReasonValid,
+  ]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}
+    >
       {/* ヘッダー */}
       <View style={styles.header}>
         <Text style={styles.title}>正式提出</Text>
@@ -289,14 +317,46 @@ export default function SubmitScreen() {
         />
       )}
 
-      {/* 提出中フェーズ */}
+      {/* 提出中フェーズ — ステップ進捗表示 */}
       {phase === 'submitting' && (
         <View style={styles.executingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
-          <Text style={styles.executingText}>提出中...</Text>
-          <Text style={styles.executingHint}>
-            ファイルをアップロードしています。しばらくお待ちください。
-          </Text>
+          {/* 進捗バー */}
+          <View style={styles.progressBarBg}>
+            <View
+              style={[styles.progressBarFill, { width: `${Math.min((submitStep + 1) * 25, 95)}%` }]}
+            />
+          </View>
+          <Text style={styles.executingHint}>正式提出を処理しています...</Text>
+
+          {/* ステップリスト */}
+          <View style={styles.stepList}>
+            {[
+              'AI判定を実行中...',
+              'ファイルをアップロード中...',
+              'レポートを生成中...',
+              'データを保存中...',
+            ].map((label, i) => (
+              <View key={i} style={styles.stepRow}>
+                {i < submitStep ? (
+                  <Text style={styles.stepDone}>✓</Text>
+                ) : i === submitStep ? (
+                  <ActivityIndicator size="small" color="#4dabf7" />
+                ) : (
+                  <Text style={styles.stepPending}>{i + 1}</Text>
+                )}
+                <Text
+                  style={[
+                    styles.stepLabel,
+                    i < submitStep && styles.stepLabelDone,
+                    i === submitStep && styles.stepLabelActive,
+                    i > submitStep && styles.stepLabelPending,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
       )}
 
@@ -305,9 +365,7 @@ export default function SubmitScreen() {
         <View style={styles.doneContainer}>
           <Text style={styles.doneIcon}>✓</Text>
           <Text style={styles.doneTitle}>提出完了</Text>
-          <Text style={styles.doneMessage}>
-            正式提出が完了しました。審査結果をお待ちください。
-          </Text>
+          <Text style={styles.doneMessage}>正式提出が完了しました。審査結果をお待ちください。</Text>
 
           {submitResult.auto_approved && (
             <View style={styles.autoApproveBanner}>
@@ -384,6 +442,56 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 8,
     textAlign: 'center',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 4,
+    backgroundColor: '#2a2a3e',
+    borderRadius: 2,
+    marginBottom: 16,
+  },
+  progressBarFill: {
+    height: 4,
+    backgroundColor: '#4dabf7',
+    borderRadius: 2,
+  },
+  stepList: {
+    marginTop: 24,
+    width: '100%',
+    maxWidth: 320,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  stepDone: {
+    color: '#51cf66',
+    fontSize: 16,
+    fontWeight: '700',
+    width: 24,
+    textAlign: 'center',
+  },
+  stepPending: {
+    color: '#555',
+    fontSize: 14,
+    fontWeight: '600',
+    width: 24,
+    textAlign: 'center',
+  },
+  stepLabel: {
+    fontSize: 15,
+    marginLeft: 12,
+  },
+  stepLabelDone: {
+    color: '#888',
+  },
+  stepLabelActive: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  stepLabelPending: {
+    color: '#555',
   },
   skipButton: {
     marginTop: 24,
