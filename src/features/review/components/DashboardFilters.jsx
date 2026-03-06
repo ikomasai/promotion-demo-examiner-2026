@@ -44,14 +44,9 @@ function PillButton({ label, active, color, count, onPress }) {
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={[
-        styles.pillText,
-        active && { color: color || '#ffffff' },
-      ]}>
+      <Text style={[styles.pillText, active && { color: color || '#ffffff' }]}>
         {label}
-        {count !== undefined && (
-          <Text style={styles.pillCount}> ({count})</Text>
-        )}
+        {count !== undefined && <Text style={styles.pillCount}> ({count})</Text>}
       </Text>
     </TouchableOpacity>
   );
@@ -66,16 +61,32 @@ function PillButton({ label, active, color, count, onPress }) {
  *   isAdmin: boolean
  * }} props
  */
+/** デフォルトフィルタ値 */
+const DEFAULT_FILTERS = {
+  status: 'pending',
+  submissionType: null,
+  autoApproveFilter: null,
+};
+
 export default function DashboardFilters({ filters, onFiltersChange, stats, isAdmin }) {
   const getCount = (statusKey) => {
     if (statusKey === null) return stats.total;
     return stats[statusKey] || 0;
   };
 
+  const hasNonDefaultFilter =
+    filters.status !== DEFAULT_FILTERS.status ||
+    filters.submissionType !== DEFAULT_FILTERS.submissionType ||
+    filters.autoApproveFilter !== DEFAULT_FILTERS.autoApproveFilter;
+
   return (
     <View style={styles.container}>
       {/* Row 1: ステータスタブ */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
         {STATUS_TABS.map((tab) => (
           <PillButton
             key={tab.key || 'all'}
@@ -90,7 +101,11 @@ export default function DashboardFilters({ filters, onFiltersChange, stats, isAd
 
       {/* Row 2: 提出先トグル（admin のみ） */}
       {isAdmin && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.row}
+        >
           {TYPE_TABS.map((tab) => (
             <PillButton
               key={tab.key || 'type-all'}
@@ -103,7 +118,11 @@ export default function DashboardFilters({ filters, onFiltersChange, stats, isAd
       )}
 
       {/* Row 3: 自動承認フィルタ */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
         {AUTO_APPROVE_TABS.map((tab) => (
           <PillButton
             key={tab.key || 'auto-all'}
@@ -113,6 +132,19 @@ export default function DashboardFilters({ filters, onFiltersChange, stats, isAd
           />
         ))}
       </ScrollView>
+
+      {/* クリアボタン */}
+      {hasNonDefaultFilter && (
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => onFiltersChange(DEFAULT_FILTERS)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.clearButtonText}>フィルターをクリア</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -144,5 +176,14 @@ const styles = StyleSheet.create({
   },
   pillCount: {
     fontWeight: '400',
+  },
+  clearButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  clearButtonText: {
+    fontSize: 12,
+    color: '#4dabf7',
+    fontWeight: '500',
   },
 });

@@ -65,15 +65,19 @@ export function AdminProvider({ children }) {
   const [screens, setScreens] = useState(new Set());
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(null);
+  const [modalDismissed, setModalDismissed] = useState(false);
 
   /**
    * 指定 screen へのアクセス権があるか判定
    * @param {string} screenName - screen 識別子
    * @returns {boolean}
    */
-  const hasScreen = useCallback((screenName) => {
-    return screens.has(screenName);
-  }, [screens]);
+  const hasScreen = useCallback(
+    (screenName) => {
+      return screens.has(screenName);
+    },
+    [screens],
+  );
 
   /**
    * 便利プロパティ: 各権限の判定
@@ -81,7 +85,10 @@ export function AdminProvider({ children }) {
   const isKohoReviewer = useMemo(() => screens.has(SCREENS.REVIEW_KOHO), [screens]);
   const isKikakuReviewer = useMemo(() => screens.has(SCREENS.REVIEW_KIKAKU), [screens]);
   const isAdmin = useMemo(() => screens.has(SCREENS.ADMIN), [screens]);
-  const isReviewer = useMemo(() => isKohoReviewer || isKikakuReviewer || isAdmin, [isKohoReviewer, isKikakuReviewer, isAdmin]);
+  const isReviewer = useMemo(
+    () => isKohoReviewer || isKikakuReviewer || isAdmin,
+    [isKohoReviewer, isKikakuReviewer, isAdmin],
+  );
 
   /**
    * パスワード検証
@@ -97,12 +104,9 @@ export function AdminProvider({ children }) {
 
     try {
       // Edge Function で bcrypt 検証
-      const { data, error: funcError } = await supabase.functions.invoke(
-        'verify-admin-password',
-        {
-          body: { role, password },
-        }
-      );
+      const { data, error: funcError } = await supabase.functions.invoke('verify-admin-password', {
+        body: { role, password },
+      });
 
       if (funcError) {
         setError('認証処理中にエラーが発生しました。');
@@ -144,6 +148,20 @@ export function AdminProvider({ children }) {
   }, []);
 
   /**
+   * 管理者認証モーダルを閉じたことを記録
+   */
+  const dismissModal = useCallback(() => {
+    setModalDismissed(true);
+  }, []);
+
+  /**
+   * 管理者認証モーダルを再表示（ドロワーからの再入用）
+   */
+  const showModal = useCallback(() => {
+    setModalDismissed(false);
+  }, []);
+
+  /**
    * 全 screen 権限をクリア（一般ユーザーに戻る）
    * @description ログアウトせずに管理者権限のみ解除する。
    *              DB への書き込みは不要（セッション state のみ）。
@@ -151,6 +169,7 @@ export function AdminProvider({ children }) {
   const clearScreens = useCallback(() => {
     setScreens(new Set());
     setError(null);
+    setModalDismissed(false);
   }, []);
 
   const value = {
@@ -160,6 +179,9 @@ export function AdminProvider({ children }) {
     isKikakuReviewer,
     isAdmin,
     isReviewer,
+    modalDismissed,
+    dismissModal,
+    showModal,
     verifying,
     error,
     clearError,

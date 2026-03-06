@@ -5,9 +5,10 @@
  * @module navigation/AppNavigator
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { useAuth } from '../shared/contexts/AuthContext';
+import { useAdmin } from '../shared/contexts/AdminContext';
 import LoadingSpinner from '../shared/components/LoadingSpinner';
 import LoginScreen from '../features/auth/screens/LoginScreen';
 import DrawerNavigator from './DrawerNavigator';
@@ -36,12 +37,7 @@ const AppTheme = {
  */
 export default function AppNavigator() {
   const { user, loading } = useAuth();
-  const [adminModalDismissed, setAdminModalDismissed] = useState(false);
-
-  // ログアウト時にリセット（次回ログイン時に再表示）
-  useEffect(() => {
-    if (!user) setAdminModalDismissed(false);
-  }, [user]);
+  const { modalDismissed, dismissModal } = useAdmin();
 
   // 認証状態確認中
   if (loading) {
@@ -60,9 +56,9 @@ export default function AppNavigator() {
         <DrawerNavigator />
       </NavigationContainer>
       <AdminPasswordModal
-        visible={!adminModalDismissed}
-        onClose={() => setAdminModalDismissed(true)}
-        onSuccess={() => setAdminModalDismissed(true)}
+        visible={!modalDismissed}
+        onClose={dismissModal}
+        onSuccess={dismissModal}
       />
     </>
   );

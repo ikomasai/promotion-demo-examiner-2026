@@ -1,7 +1,7 @@
 /**
  * @fileoverview 設定画面 - システム設定管理
- * @description システム設定の閲覧と編集。4セクション構成:
- *              提出設定、AI自動承認設定、AI設定、パスワード変更。
+ * @description システム設定の閲覧と編集。3セクション構成:
+ *              提出・AI設定、自動承認ポリシー、パスワード管理。
  *              フィールド毎の即時保存。非admin審査者は読取専用。
  * @module features/settings/screens/SettingsScreen
  */
@@ -33,8 +33,8 @@ export default function SettingsScreen() {
   const { showSuccess, showError } = useToast();
   const { settings, loading, error, refresh, updateSetting, updating } = useAppSettings();
 
-  // 自動承認モーダル
-  const [showAutoApproveModal, setShowAutoApproveModal] = useState(false);
+  // 自動承認モーダル: null = 非表示, 'enable'|'disable' = 表示
+  const [autoApproveModalAction, setAutoApproveModalAction] = useState(null);
   // パスワード変更モーダル: null = 非表示, 'koho'|'kikaku'|'super' = 表示
   const [passwordChangeRole, setPasswordChangeRole] = useState(null);
 
@@ -58,34 +58,26 @@ export default function SettingsScreen() {
 
   /**
    * 自動承認トグルのハンドラ
-   * OFF→ON: モーダルで確認 / ON→OFF: 即座に更新
+   * ON/OFF どちらもモーダルで確認
    */
-  const handleAutoApproveToggle = useCallback(
-    (value) => {
-      if (value === 'true') {
-        // OFF → ON: 免責モーダル表示
-        setShowAutoApproveModal(true);
-      } else {
-        // ON → OFF: 即座に無効化
-        handleUpdateSetting('auto_approve_enabled', 'false');
-      }
-    },
-    [handleUpdateSetting],
-  );
+  const handleAutoApproveToggle = useCallback((value) => {
+    setAutoApproveModalAction(value === 'true' ? 'enable' : 'disable');
+  }, []);
 
   /**
    * 自動承認モーダルで確認
    */
   const handleAutoApproveConfirm = useCallback(() => {
-    setShowAutoApproveModal(false);
-    handleUpdateSetting('auto_approve_enabled', 'true');
-  }, [handleUpdateSetting]);
+    const newValue = autoApproveModalAction === 'enable' ? 'true' : 'false';
+    setAutoApproveModalAction(null);
+    handleUpdateSetting('auto_approve_enabled', newValue);
+  }, [autoApproveModalAction, handleUpdateSetting]);
 
   /**
    * 自動承認モーダルでキャンセル
    */
   const handleAutoApproveCancel = useCallback(() => {
-    setShowAutoApproveModal(false);
+    setAutoApproveModalAction(null);
   }, []);
 
   // ローディング中
@@ -113,7 +105,10 @@ export default function SettingsScreen() {
         {/* 閲覧専用バナー */}
         {isReadOnly && (
           <View style={styles.readOnlyBanner}>
-            <Text style={styles.readOnlyText}>閲覧モード — 設定の変更には管理者権限が必要です</Text>
+            <Text style={styles.readOnlyText}>
+              閲覧モード —
+              設定変更とパスワード管理は管理者のみ可能です。審査機能はダッシュボードから利用できます。
+            </Text>
           </View>
         )}
 
@@ -124,9 +119,9 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* セクション1: 提出設定 */}
+        {/* セクション1: 提出・AI設定 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>提出設定</Text>
+          <Text style={styles.sectionTitle}>提出・AI設定</Text>
           <SettingItem
             type="toggle"
             label="提出受付"
@@ -145,11 +140,21 @@ export default function SettingsScreen() {
             min={0}
             max={99}
           />
+          <SettingItem
+            type="number"
+            label="AI判定タイムアウト"
+            value={settings.ai_timeout_seconds}
+            onValueChange={(v) => handleUpdateSetting('ai_timeout_seconds', v)}
+            disabled={isReadOnly || updating}
+            suffix="秒"
+            min={5}
+            max={120}
+          />
         </View>
 
-        {/* セクション2: AI 自動承認設定 */}
+        {/* セクション2: 自動承認ポリシー */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>AI 自動承認設定</Text>
+          <Text style={styles.sectionTitle}>自動承認ポリシー</Text>
           <SettingItem
             type="toggle"
             label="自動承認"
@@ -181,25 +186,10 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        {/* セクション3: AI 設定 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>AI 設定</Text>
-          <SettingItem
-            type="number"
-            label="AI判定タイムアウト"
-            value={settings.ai_timeout_seconds}
-            onValueChange={(v) => handleUpdateSetting('ai_timeout_seconds', v)}
-            disabled={isReadOnly || updating}
-            suffix="秒"
-            min={5}
-            max={120}
-          />
-        </View>
-
-        {/* セクション4: パスワード変更（admin限定） */}
+        {/* セクション3: パスワード管理（admin限定） */}
         {isAdmin && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>パスワード変更</Text>
+            <Text style={styles.sectionTitle}>パスワード管理</Text>
             <SettingItem
               type="button"
               label="広報部パスワード変更"
@@ -228,9 +218,10 @@ export default function SettingsScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* 自動承認免責モーダル */}
+      {/* 自動承認確認モーダル */}
       <AutoApproveWarningModal
-        visible={showAutoApproveModal}
+        visible={autoApproveModalAction !== null}
+        action={autoApproveModalAction || 'enable'}
         onConfirm={handleAutoApproveConfirm}
         onCancel={handleAutoApproveCancel}
       />

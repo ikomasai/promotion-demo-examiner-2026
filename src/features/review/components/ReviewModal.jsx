@@ -6,16 +6,8 @@
  * @module features/review/components/ReviewModal
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  Linking,
-} from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Modal, View, Text, StyleSheet, TextInput, ScrollView, Linking } from 'react-native';
 import { colors, spacing, radii, typography } from '../../../shared/theme';
 import Button from '../../../shared/components/Button';
 
@@ -25,8 +17,10 @@ import Button from '../../../shared/components/Button';
 function getRiskInfo(score) {
   if (score === null || score === undefined)
     return { color: colors.text.tertiary, label: '判定なし', bg: colors.bg.elevated };
-  if (score <= 10) return { color: colors.accent.success, label: '低リスク', bg: colors.surfaceTint.success };
-  if (score <= 50) return { color: colors.accent.warning, label: '中リスク', bg: colors.surfaceTint.warning };
+  if (score <= 10)
+    return { color: colors.accent.success, label: '低リスク', bg: colors.surfaceTint.success };
+  if (score <= 50)
+    return { color: colors.accent.warning, label: '中リスク', bg: colors.surfaceTint.warning };
   return { color: colors.accent.danger, label: '高リスク', bg: colors.surfaceTint.danger };
 }
 
@@ -35,7 +29,7 @@ function getRiskInfo(score) {
  */
 function extractFlaggedItems(riskDetails) {
   if (!riskDetails || !Array.isArray(riskDetails.items)) return [];
-  return riskDetails.items.filter((item) => item.flagged).slice(0, 5);
+  return riskDetails.items.filter((item) => item.flagged);
 }
 
 /**
@@ -56,14 +50,26 @@ export default function ReviewModal({
   onReject,
   onCancel,
   reviewing,
+  currentIndex,
+  totalCount,
+  onPrev,
+  onNext,
 }) {
   const [comment, setComment] = useState('');
+  const [flagsExpanded, setFlagsExpanded] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setComment('');
+      setFlagsExpanded(false);
     }
   }, [visible]);
+
+  // ナビゲーション時にコメントをリセット
+  useEffect(() => {
+    setComment('');
+    setFlagsExpanded(false);
+  }, [currentIndex]);
 
   const riskInfo = useMemo(
     () => getRiskInfo(submission?.ai_risk_score),
@@ -91,6 +97,33 @@ export default function ReviewModal({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
+            {/* ナビゲーションヘッダー */}
+            {onPrev !== undefined || onNext !== undefined ? (
+              <View style={styles.navHeader}>
+                <Button
+                  variant="outline-muted"
+                  size="sm"
+                  onPress={onPrev}
+                  disabled={!onPrev || reviewing}
+                  style={styles.navButton}
+                >
+                  ← 前へ
+                </Button>
+                <Text style={styles.navCounter}>
+                  {currentIndex + 1} / {totalCount}
+                </Text>
+                <Button
+                  variant="outline-muted"
+                  size="sm"
+                  onPress={onNext}
+                  disabled={!onNext || reviewing}
+                  style={styles.navButton}
+                >
+                  次へ →
+                </Button>
+              </View>
+            ) : null}
+
             <Text style={styles.title}>提出物の審査</Text>
 
             {/* ファイル情報 */}
@@ -130,8 +163,8 @@ export default function ReviewModal({
             {/* 指摘事項サマリー */}
             {flaggedItems.length > 0 && (
               <View style={styles.flaggedSection}>
-                <Text style={styles.flaggedTitle}>AI 指摘事項</Text>
-                {flaggedItems.map((item, i) => (
+                <Text style={styles.flaggedTitle}>AI 指摘事項 ({flaggedItems.length}件)</Text>
+                {(flagsExpanded ? flaggedItems : flaggedItems.slice(0, 5)).map((item, i) => (
                   <View key={i} style={styles.flaggedItem}>
                     <Text style={styles.flaggedBullet}>!</Text>
                     <View style={styles.flaggedContent}>
@@ -140,6 +173,16 @@ export default function ReviewModal({
                     </View>
                   </View>
                 ))}
+                {flaggedItems.length > 5 && !flagsExpanded && (
+                  <Button
+                    variant="outline-muted"
+                    size="sm"
+                    onPress={() => setFlagsExpanded(true)}
+                    style={styles.expandButton}
+                  >
+                    他{flaggedItems.length - 5}件を表示
+                  </Button>
+                )}
               </View>
             )}
 
@@ -222,6 +265,20 @@ const styles = StyleSheet.create({
     padding: spacing.xxl,
     paddingBottom: spacing.lg,
   },
+  navHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  navButton: {
+    minWidth: 70,
+  },
+  navCounter: {
+    ...typography.caption,
+    color: colors.text.muted,
+    fontWeight: '600',
+  },
   title: {
     ...typography.heading4,
     color: colors.text.primary,
@@ -299,6 +356,9 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.text.tertiary,
     marginTop: 2,
+  },
+  expandButton: {
+    marginTop: spacing.sm,
   },
   commentSection: {
     marginBottom: spacing.xs,

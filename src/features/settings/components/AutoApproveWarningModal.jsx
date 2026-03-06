@@ -10,13 +10,21 @@ import { colors, spacing, radii, typography } from '../../../shared/theme';
 import Button from '../../../shared/components/Button';
 
 /**
- * 自動承認 免責確認モーダル
+ * 自動承認 確認モーダル
  * @param {Object} props
  * @param {boolean} props.visible - 表示状態
- * @param {() => void} props.onConfirm - 有効化を確認
- * @param {() => void} props.onCancel - キャンセル（トグルOFFに戻る）
+ * @param {'enable'|'disable'} props.action - 有効化 or 無効化
+ * @param {() => void} props.onConfirm - 確認
+ * @param {() => void} props.onCancel - キャンセル
  */
-export default function AutoApproveWarningModal({ visible, onConfirm, onCancel }) {
+export default function AutoApproveWarningModal({
+  visible,
+  action = 'enable',
+  onConfirm,
+  onCancel,
+}) {
+  const isEnable = action === 'enable';
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
@@ -26,25 +34,35 @@ export default function AutoApproveWarningModal({ visible, onConfirm, onCancel }
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.warningIcon}>⚠</Text>
-            <Text style={styles.title}>自動承認機能の有効化</Text>
+            <Text style={styles.warningIcon}>{isEnable ? '⚠' : 'ℹ'}</Text>
+            <Text style={styles.title}>
+              {isEnable ? '自動承認機能の有効化' : '自動承認機能の無効化'}
+            </Text>
 
-            <View style={styles.disclaimerBox}>
-              <Text style={styles.disclaimerText}>
-                自動承認機能を有効にすると、AIの判定スコアが閾値以上の提出物は人間の審査を経ずに自動的に承認されます。
-              </Text>
-              <Text style={styles.disclaimerText}>
-                {'\n'}この機能を有効にした場合、以下のリスクを理解し同意したものとみなします：
-              </Text>
-              <Text style={styles.riskItem}>
-                • AI判定は完全ではなく、不適切な素材が承認される可能性があります
-              </Text>
-              <Text style={styles.riskItem}>
-                • 自動承認された素材に関する責任は管理者が負います
-              </Text>
-              <Text style={styles.riskItem}>
-                • 問題が発生した場合、手動で承認を取り消す必要があります
-              </Text>
+            <View style={[styles.disclaimerBox, !isEnable && styles.disclaimerBoxInfo]}>
+              {isEnable ? (
+                <>
+                  <Text style={styles.disclaimerText}>
+                    自動承認機能を有効にすると、AIの判定スコアが閾値以上の提出物は人間の審査を経ずに自動的に承認されます。
+                  </Text>
+                  <Text style={styles.disclaimerText}>
+                    {'\n'}この機能を有効にした場合、以下のリスクを理解し同意したものとみなします：
+                  </Text>
+                  <Text style={styles.riskItem}>
+                    • AI判定は完全ではなく、不適切な素材が承認される可能性があります
+                  </Text>
+                  <Text style={styles.riskItem}>
+                    • 自動承認された素材に関する責任は管理者が負います
+                  </Text>
+                  <Text style={styles.riskItem}>
+                    • 問題が発生した場合、手動で承認を取り消す必要があります
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.disclaimerText}>
+                  自動承認を無効にすると、全ての提出が手動審査となります。審査の遅延を防ぐため、ダッシュボードで未審査の提出を定期的に確認してください。
+                </Text>
+              )}
             </View>
           </ScrollView>
 
@@ -52,8 +70,12 @@ export default function AutoApproveWarningModal({ visible, onConfirm, onCancel }
             <Button variant="muted" onPress={onCancel} style={styles.flex}>
               キャンセル
             </Button>
-            <Button variant="warning" onPress={onConfirm} style={styles.flex}>
-              有効化する
+            <Button
+              variant={isEnable ? 'warning' : 'primary'}
+              onPress={onConfirm}
+              style={styles.flex}
+            >
+              {isEnable ? '有効化する' : '無効化する'}
             </Button>
           </View>
         </View>
@@ -102,6 +124,9 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderLeftWidth: 4,
     borderLeftColor: colors.accent.warning,
+  },
+  disclaimerBoxInfo: {
+    borderLeftColor: colors.accent.primary,
   },
   disclaimerText: {
     ...typography.body,

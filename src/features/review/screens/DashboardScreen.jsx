@@ -44,45 +44,71 @@ export default function DashboardScreen() {
   const { reviewing, error: reviewError, versionConflict, review, clearError } = useReview();
 
   // モーダル状態
-  const [reviewTarget, setReviewTarget] = useState(null);
+  const [reviewTargetIndex, setReviewTargetIndex] = useState(-1);
   const [detailTarget, setDetailTarget] = useState(null);
 
-  const handleReviewPress = useCallback((submission) => {
-    clearError();
-    setReviewTarget(submission);
-  }, [clearError]);
+  const reviewTarget = reviewTargetIndex >= 0 ? submissions[reviewTargetIndex] : null;
+
+  const handleReviewPress = useCallback(
+    (submission) => {
+      clearError();
+      const idx = submissions.findIndex((s) => s.id === submission.id);
+      setReviewTargetIndex(idx >= 0 ? idx : -1);
+    },
+    [clearError, submissions],
+  );
 
   const handleDetailPress = useCallback((submission) => {
     setDetailTarget(submission);
   }, []);
 
-  const handleApprove = useCallback(async (comment) => {
-    if (!reviewTarget) return;
-    const success = await review(reviewTarget.id, 'approve', comment, reviewTarget.version);
-    if (success) {
-      showSuccess('承認しました');
-      setReviewTarget(null);
-      refresh();
-    }
-  }, [reviewTarget, review, showSuccess, refresh]);
+  const handleApprove = useCallback(
+    async (comment) => {
+      if (!reviewTarget) return;
+      const success = await review(reviewTarget.id, 'approve', comment, reviewTarget.version);
+      if (success) {
+        showSuccess('承認しました');
+        setReviewTargetIndex(-1);
+        refresh();
+      }
+    },
+    [reviewTarget, review, showSuccess, refresh],
+  );
 
-  const handleReject = useCallback(async (comment) => {
-    if (!reviewTarget) return;
-    const success = await review(reviewTarget.id, 'reject', comment, reviewTarget.version);
-    if (success) {
-      showSuccess('却下しました');
-      setReviewTarget(null);
-      refresh();
-    }
-  }, [reviewTarget, review, showSuccess, refresh]);
+  const handleReject = useCallback(
+    async (comment) => {
+      if (!reviewTarget) return;
+      const success = await review(reviewTarget.id, 'reject', comment, reviewTarget.version);
+      if (success) {
+        showSuccess('却下しました');
+        setReviewTargetIndex(-1);
+        refresh();
+      }
+    },
+    [reviewTarget, review, showSuccess, refresh],
+  );
 
   const handleReviewCancel = useCallback(() => {
     if (versionConflict) {
       refresh();
     }
     clearError();
-    setReviewTarget(null);
+    setReviewTargetIndex(-1);
   }, [versionConflict, refresh, clearError]);
+
+  const handlePrev = useCallback(() => {
+    if (reviewTargetIndex > 0) {
+      clearError();
+      setReviewTargetIndex(reviewTargetIndex - 1);
+    }
+  }, [reviewTargetIndex, clearError]);
+
+  const handleNext = useCallback(() => {
+    if (reviewTargetIndex < submissions.length - 1) {
+      clearError();
+      setReviewTargetIndex(reviewTargetIndex + 1);
+    }
+  }, [reviewTargetIndex, submissions.length, clearError]);
 
   const pendingCount = stats.pending;
 
@@ -151,9 +177,7 @@ export default function DashboardScreen() {
           onReview={handleReviewPress}
           onDetail={handleDetailPress}
           emptyMessage={
-            filters.status === 'pending'
-              ? '未審査の提出はありません'
-              : '該当する提出がありません'
+            filters.status === 'pending' ? '未審査の提出はありません' : '該当する提出がありません'
           }
         />
       )}
@@ -166,6 +190,10 @@ export default function DashboardScreen() {
         onReject={handleReject}
         onCancel={handleReviewCancel}
         reviewing={reviewing}
+        currentIndex={reviewTargetIndex}
+        totalCount={submissions.length}
+        onPrev={reviewTargetIndex > 0 ? handlePrev : undefined}
+        onNext={reviewTargetIndex < submissions.length - 1 ? handleNext : undefined}
       />
 
       {/* 詳細モーダル */}

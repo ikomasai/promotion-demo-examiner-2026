@@ -8,10 +8,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-} from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useAdmin } from '../../shared/contexts/AdminContext';
 
@@ -42,7 +39,8 @@ function getRoleLabel({ isAdmin, isKohoReviewer, isKikakuReviewer }) {
  */
 export default function CustomDrawerContent(props) {
   const { user, profile, signOut } = useAuth();
-  const { isAdmin, isKohoReviewer, isKikakuReviewer, isReviewer, clearScreens } = useAdmin();
+  const { isAdmin, isKohoReviewer, isKikakuReviewer, isReviewer, clearScreens, showModal } =
+    useAdmin();
 
   /**
    * ログアウト処理
@@ -80,9 +78,13 @@ export default function CustomDrawerContent(props) {
 
       {/* フッター: ログアウト */}
       <View style={styles.footer}>
-        {isReviewer && (
+        {isReviewer ? (
           <TouchableOpacity style={styles.clearButton} onPress={handleClearAdmin}>
             <Text style={styles.clearButtonText}>管理者モード解除</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.adminAuthButton} onPress={showModal}>
+            <Text style={styles.adminAuthButtonText}>管理者認証</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -145,6 +147,19 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     color: '#ff9800',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  adminAuthButton: {
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#4dabf7',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  adminAuthButtonText: {
+    color: '#4dabf7',
     fontSize: 14,
     fontWeight: '500',
   },
