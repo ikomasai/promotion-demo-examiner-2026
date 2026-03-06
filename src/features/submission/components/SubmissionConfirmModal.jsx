@@ -5,8 +5,10 @@
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { modalBaseStyles } from '../../../shared/styles/modalStyles';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import ConfirmModal from '../../../shared/components/ConfirmModal';
+import Button from '../../../shared/components/Button';
 
 /**
  * 中リスク時の提出確認モーダル
@@ -19,74 +21,58 @@ import { modalBaseStyles } from '../../../shared/styles/modalStyles';
  */
 export default function SubmissionConfirmModal({ visible, score, onConfirm, onCancel }) {
   return (
-    <Modal
+    <ConfirmModal
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
+      title="提出確認"
+      onClose={onCancel}
+      actions={
+        <>
+          <Button variant="outline-muted" onPress={onCancel} style={styles.flex}>
+            キャンセル
+          </Button>
+          <Button variant="warning" onPress={onConfirm} style={styles.flex}>
+            提出する
+          </Button>
+        </>
+      }
     >
-      <View style={modalBaseStyles.overlay}>
-        <View style={modalBaseStyles.modal}>
-          <Text style={modalBaseStyles.title}>提出確認</Text>
-
-          <View style={styles.scoreContainer}>
-            <Text style={styles.scoreLabel}>リスクスコア</Text>
-            <Text style={styles.scoreValue}>{score ?? '--'}%</Text>
-          </View>
-
-          <Text style={styles.message}>
-            注意事項がある可能性があります。提出しますか？
-          </Text>
-
-          <View style={modalBaseStyles.actions}>
-            <TouchableOpacity style={modalBaseStyles.cancelButton} onPress={onCancel}>
-              <Text style={modalBaseStyles.cancelText}>キャンセル</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
-              <Text style={styles.confirmText}>提出する</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <View style={styles.scoreContainer}>
+        <Text style={styles.scoreLabel}>リスクスコア</Text>
+        <Text style={styles.scoreValue}>{score ?? '--'}%</Text>
       </View>
-    </Modal>
+      <Text style={styles.message}>
+        注意事項がある可能性があります。提出しますか？
+      </Text>
+    </ConfirmModal>
   );
 }
 
 const styles = StyleSheet.create({
   scoreContainer: {
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.bg.primary,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
   },
   scoreLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 4,
+    ...typography.caption,
+    color: colors.text.muted,
+    marginBottom: spacing.xs,
   },
   scoreValue: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#ff9800',
+    color: colors.accent.warning,
   },
   message: {
-    fontSize: 14,
-    color: '#e0e0e0',
+    ...typography.body,
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
-  confirmButton: {
+  flex: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#ff9800',
-  },
-  confirmText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

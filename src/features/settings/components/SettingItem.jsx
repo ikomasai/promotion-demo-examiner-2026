@@ -14,21 +14,10 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
 
 /**
  * 汎用設定項目
- * @param {Object} props
- * @param {'toggle'|'number'|'button'} props.type - 表示タイプ
- * @param {string} props.label - ラベルテキスト
- * @param {string} [props.description] - 補足説明
- * @param {string} [props.value] - 現在値（toggle: "true"/"false", number: "30"）
- * @param {(value: string) => void} [props.onValueChange] - 値変更コールバック
- * @param {() => void} [props.onPress] - ボタン押下コールバック（button type）
- * @param {boolean} [props.disabled] - 無効化
- * @param {string} [props.suffix] - 単位ラベル（"回/日", "秒", "%以下を自動承認"）
- * @param {number} [props.min] - 最小値（number type）
- * @param {number} [props.max] - 最大値（number type）
- * @param {string} [props.buttonLabel] - ボタンラベル（button type）
  */
 export default React.memo(function SettingItem({
   type,
@@ -43,24 +32,17 @@ export default React.memo(function SettingItem({
   max,
   buttonLabel,
 }) {
-  // number type: ローカル入力値（入力中は DB 値と乖離する）
   const [localValue, setLocalValue] = useState(value || '');
 
-  // 外部から value が変わったら同期
   useEffect(() => {
     if (type === 'number' && value !== undefined) {
       setLocalValue(value);
     }
   }, [type, value]);
 
-  /**
-   * 数値入力の blur ハンドラ
-   * NaN → 元の値に戻す、空 → 元の値に戻す、範囲外 → clamp して保存
-   */
   const handleNumberBlur = () => {
     const parsed = parseInt(localValue, 10);
     if (isNaN(parsed) || localValue.trim() === '') {
-      // 無効な入力 → 元の値に戻す
       setLocalValue(value || '');
       return;
     }
@@ -99,16 +81,14 @@ export default React.memo(function SettingItem({
         <View style={styles.row}>
           <View style={styles.labelContainer}>
             <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text>
-            {description && (
-              <Text style={styles.description}>{description}</Text>
-            )}
+            {description && <Text style={styles.description}>{description}</Text>}
           </View>
           <Switch
             value={isOn}
             onValueChange={(val) => onValueChange?.(val ? 'true' : 'false')}
             disabled={disabled}
-            trackColor={{ false: '#3d3d5c', true: '#4dabf7' }}
-            thumbColor={isOn ? '#ffffff' : '#888888'}
+            trackColor={{ false: colors.border.default, true: colors.accent.primary }}
+            thumbColor={isOn ? colors.text.primary : colors.text.muted}
           />
         </View>
       </View>
@@ -121,9 +101,7 @@ export default React.memo(function SettingItem({
       <View style={styles.row}>
         <View style={styles.labelContainer}>
           <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text>
-          {description && (
-            <Text style={styles.description}>{description}</Text>
-          )}
+          {description && <Text style={styles.description}>{description}</Text>}
         </View>
         <View style={styles.numberRow}>
           <TextInput
@@ -146,77 +124,75 @@ export default React.memo(function SettingItem({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
   },
   labelContainer: {
     flex: 1,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
+    ...typography.label,
+    color: colors.text.primary,
   },
   labelDisabled: {
-    color: '#666666',
+    color: colors.text.disabled,
   },
   description: {
-    fontSize: 12,
-    color: '#a0a0a0',
+    ...typography.caption,
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   numberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   numberInput: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-    color: '#ffffff',
+    backgroundColor: colors.bg.primary,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    ...typography.bodyLarge,
+    color: colors.text.primary,
     textAlign: 'center',
     minWidth: 60,
     borderWidth: 1,
-    borderColor: '#3d3d5c',
+    borderColor: colors.border.default,
   },
   numberInputDisabled: {
     backgroundColor: '#22223a',
-    color: '#666666',
-    borderColor: '#2d2d44',
+    color: colors.text.disabled,
+    borderColor: colors.bg.elevated,
   },
   suffix: {
     fontSize: 13,
-    color: '#a0a0a0',
+    color: colors.text.tertiary,
   },
   button: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#3d3d5c',
+    borderColor: colors.border.default,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
   buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4dabf7',
+    ...typography.label,
+    color: colors.accent.primary,
   },
   buttonTextDisabled: {
-    color: '#666666',
+    color: colors.text.disabled,
   },
 });

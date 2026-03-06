@@ -6,7 +6,11 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { colors, spacing, typography } from '../../../shared/theme';
+import Badge from '../../../shared/components/Badge';
+import Banner from '../../../shared/components/Banner';
+import Button from '../../../shared/components/Button';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionForm from '../components/SubmissionForm';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
@@ -18,15 +22,8 @@ import { usePrecheck } from '../hooks/usePrecheck';
  *              phase: 'form' → 'executing' → 'result'
  */
 export default function PrecheckScreen() {
-  const {
-    remainingCount,
-    isLimitReached,
-    executing,
-    result,
-    error,
-    executePrecheck,
-    clearResult,
-  } = usePrecheck();
+  const { remainingCount, isLimitReached, executing, result, error, executePrecheck, clearResult } =
+    usePrecheck();
 
   const { isMobile } = useResponsive();
 
@@ -75,9 +72,12 @@ export default function PrecheckScreen() {
   /**
    * フォーム送信 → 事前チェック実行
    */
-  const handleSubmit = useCallback((formData) => {
-    executePrecheck(formData);
-  }, [executePrecheck]);
+  const handleSubmit = useCallback(
+    (formData) => {
+      executePrecheck(formData);
+    },
+    [executePrecheck],
+  );
 
   /**
    * リセット → フォームフェーズに戻る
@@ -111,31 +111,33 @@ export default function PrecheckScreen() {
   }, [phase, result]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, isMobile && styles.contentMobile]}
+    >
       {/* ヘッダー */}
       <View style={styles.header}>
         <Text style={styles.title}>事前チェック</Text>
-        <View style={styles.counterBadge}>
-          <Text style={styles.counterText}>
-            残り: {remainingCount}回/本日
-          </Text>
-        </View>
+        <Badge
+          label={`残り: ${remainingCount}回/本日`}
+          bg={colors.bg.elevated}
+          color={colors.accent.primary}
+          size="md"
+        />
       </View>
 
       {/* 上限バナー */}
       {isLimitReached && phase === 'form' && (
-        <View style={styles.limitBanner}>
-          <Text style={styles.limitText}>
-            本日の事前チェック利用上限に達しました。明日（JST 0:00）にリセットされます。
-          </Text>
-        </View>
+        <Banner variant="error" style={styles.banner}>
+          本日の事前チェック利用上限に達しました。明日（JST 0:00）にリセットされます。
+        </Banner>
       )}
 
       {/* エラー表示 */}
       {error && phase !== 'result' && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
+        <Banner variant="warning" style={styles.banner}>
+          {error}
+        </Banner>
       )}
 
       {/* フォームフェーズ */}
@@ -151,15 +153,19 @@ export default function PrecheckScreen() {
       {/* 実行中フェーズ */}
       {phase === 'executing' && (
         <View style={styles.executingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
+          <ActivityIndicator size="large" color={colors.accent.primary} />
           <Text style={styles.executingText}>AI判定を実行中...</Text>
           <Text style={styles.executingHint}>
             ファイルをAIが分析しています。しばらくお待ちください。
           </Text>
           {showSkipButton && (
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-              <Text style={styles.skipButtonText}>AI判定をスキップ</Text>
-            </TouchableOpacity>
+            <Button
+              variant="outline-warning"
+              onPress={handleSkip}
+              style={{ marginTop: spacing.xxl }}
+            >
+              AI判定をスキップ
+            </Button>
           )}
         </View>
       )}
@@ -175,93 +181,44 @@ export default function PrecheckScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.bg.primary,
   },
   content: {
     paddingBottom: 40,
   },
   contentMobile: {
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingBottom: 8,
+    padding: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
+    ...typography.heading3,
+    color: colors.text.primary,
   },
-  counterBadge: {
-    backgroundColor: '#2d2d44',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  counterText: {
-    fontSize: 13,
-    color: '#4dabf7',
-    fontWeight: '600',
-  },
-  limitBanner: {
-    backgroundColor: '#3d1f1f',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#f44336',
-  },
-  limitText: {
-    color: '#f44336',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  errorBanner: {
-    backgroundColor: '#3d2f1f',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  errorText: {
-    color: '#ff9800',
-    fontSize: 13,
-    textAlign: 'center',
+  banner: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   executingContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
   executingText: {
-    fontSize: 18,
+    ...typography.heading4,
     fontWeight: '600',
-    color: '#ffffff',
-    marginTop: 20,
+    color: colors.text.primary,
+    marginTop: spacing.xl,
   },
   executingHint: {
     fontSize: 13,
-    color: '#888',
-    marginTop: 8,
+    color: colors.text.muted,
+    marginTop: spacing.sm,
     textAlign: 'center',
-  },
-  skipButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  skipButtonText: {
-    color: '#ff9800',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

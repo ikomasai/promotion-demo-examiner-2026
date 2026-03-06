@@ -7,6 +7,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
+import { colors } from '../theme';
 
 /**
  * 汎用スケルトンローダー
@@ -40,18 +41,12 @@ export default function SkeletonLoader({ width, height, borderRadius = 8, style 
   }, [opacity]);
 
   return (
-    <Animated.View
-      style={[
-        styles.skeleton,
-        { width, height, borderRadius, opacity },
-        style,
-      ]}
-    />
+    <Animated.View style={[styles.skeleton, { width, height, borderRadius, opacity }, style]} />
   );
 }
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: '#2d2d44',
+    backgroundColor: colors.bg.elevated,
   },
 });

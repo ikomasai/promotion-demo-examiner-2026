@@ -1,13 +1,14 @@
 /**
  * @fileoverview 削除確認モーダル
  * @description pending 提出の削除前に表示する確認ダイアログ。
- *              SubmissionConfirmModal のパターンを踏襲。
  * @module features/submission/components/DeleteConfirmModal
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { modalBaseStyles } from '../../../shared/styles/modalStyles';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import ConfirmModal from '../../../shared/components/ConfirmModal';
+import Button from '../../../shared/components/Button';
 
 /**
  * 削除確認モーダル
@@ -21,75 +22,61 @@ import { modalBaseStyles } from '../../../shared/styles/modalStyles';
  */
 export default function DeleteConfirmModal({ visible, submission, onConfirm, onCancel, deleting }) {
   return (
-    <Modal
+    <ConfirmModal
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
+      title="提出を削除"
+      onClose={onCancel}
+      actions={
+        <>
+          <Button
+            variant="outline-muted"
+            onPress={onCancel}
+            disabled={deleting}
+            style={styles.flex}
+          >
+            キャンセル
+          </Button>
+          <Button
+            variant="danger"
+            onPress={onConfirm}
+            disabled={deleting}
+            loading={deleting}
+            style={styles.flex}
+          >
+            削除する
+          </Button>
+        </>
+      }
     >
-      <View style={modalBaseStyles.overlay}>
-        <View style={modalBaseStyles.modal}>
-          <Text style={modalBaseStyles.title}>提出を削除</Text>
-
-          <Text style={styles.fileName} numberOfLines={2}>
-            {submission?.file_name}
-          </Text>
-
-          <Text style={modalBaseStyles.message}>
-            この提出を削除しますか？{'\n'}
-            この操作は取り消せません。
-          </Text>
-
-          <View style={modalBaseStyles.actions}>
-            <TouchableOpacity
-              style={modalBaseStyles.cancelButton}
-              onPress={onCancel}
-              disabled={deleting}
-            >
-              <Text style={modalBaseStyles.cancelText}>キャンセル</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.deleteButton, deleting && styles.deleteButtonDisabled]}
-              onPress={onConfirm}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.deleteText}>削除する</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
+      <Text style={styles.fileName} numberOfLines={2}>
+        {submission?.file_name}
+      </Text>
+      <Text style={styles.message}>
+        この提出を削除しますか？{'\n'}
+        この操作は取り消せません。
+      </Text>
+    </ConfirmModal>
   );
 }
 
 const styles = StyleSheet.create({
   fileName: {
-    fontSize: 14,
-    color: '#e0e0e0',
+    ...typography.body,
+    color: colors.text.secondary,
     textAlign: 'center',
-    backgroundColor: '#1a1a2e',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: colors.bg.primary,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  deleteButton: {
+  message: {
+    ...typography.body,
+    color: colors.text.tertiary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.xxl,
+  },
+  flex: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#f44336',
-  },
-  deleteButtonDisabled: {
-    opacity: 0.6,
-  },
-  deleteText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

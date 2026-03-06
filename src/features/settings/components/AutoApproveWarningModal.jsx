@@ -1,19 +1,13 @@
 /**
  * @fileoverview 自動承認 免責確認モーダル
  * @description 自動承認機能を有効化する前に免責事項の同意を求める。
- *              確認ボタンは警告色（#ff9800）で重大さを示す。
  * @module features/settings/components/AutoApproveWarningModal
  */
 
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, ScrollView } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Button from '../../../shared/components/Button';
 
 /**
  * 自動承認 免責確認モーダル
@@ -24,12 +18,7 @@ import {
  */
 export default function AutoApproveWarningModal({ visible, onConfirm, onCancel }) {
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <ScrollView
@@ -37,11 +26,9 @@ export default function AutoApproveWarningModal({ visible, onConfirm, onCancel }
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* ヘッダー */}
             <Text style={styles.warningIcon}>⚠</Text>
             <Text style={styles.title}>自動承認機能の有効化</Text>
 
-            {/* 免責テキスト */}
             <View style={styles.disclaimerBox}>
               <Text style={styles.disclaimerText}>
                 自動承認機能を有効にすると、AIの判定スコアが閾値以上の提出物は人間の審査を経ずに自動的に承認されます。
@@ -61,20 +48,13 @@ export default function AutoApproveWarningModal({ visible, onConfirm, onCancel }
             </View>
           </ScrollView>
 
-          {/* ボタン */}
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onCancel}
-            >
-              <Text style={styles.cancelText}>キャンセル</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={onConfirm}
-            >
-              <Text style={styles.confirmText}>有効化する</Text>
-            </TouchableOpacity>
+            <Button variant="muted" onPress={onCancel} style={styles.flex}>
+              キャンセル
+            </Button>
+            <Button variant="warning" onPress={onConfirm} style={styles.flex}>
+              有効化する
+            </Button>
           </View>
         </View>
       </View>
@@ -88,11 +68,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   modal: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: colors.bg.primary,
+    borderRadius: radii.xl,
     width: '100%',
     maxWidth: 440,
     maxHeight: '80%',
@@ -102,70 +82,48 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 16,
+    padding: spacing.xxl,
+    paddingBottom: spacing.lg,
     alignItems: 'center',
   },
   warningIcon: {
     fontSize: 40,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ff9800',
+    ...typography.heading4,
+    color: colors.accent.warning,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   disclaimerBox: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
-    padding: 16,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
+    padding: spacing.lg,
     borderLeftWidth: 4,
-    borderLeftColor: '#ff9800',
+    borderLeftColor: colors.accent.warning,
   },
   disclaimerText: {
-    fontSize: 14,
-    color: '#e0e0e0',
+    ...typography.body,
+    color: colors.text.secondary,
     lineHeight: 22,
   },
   riskItem: {
-    fontSize: 14,
-    color: '#e0e0e0',
+    ...typography.body,
+    color: colors.text.secondary,
     lineHeight: 22,
-    marginTop: 4,
-    paddingLeft: 4,
+    marginTop: spacing.xs,
+    paddingLeft: spacing.xs,
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
-    padding: 24,
-    paddingTop: 8,
+    gap: spacing.md,
+    padding: spacing.xxl,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#3d3d5c',
+    borderTopColor: colors.border.default,
   },
-  cancelButton: {
+  flex: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#2d2d44',
-  },
-  cancelText: {
-    color: '#a0a0a0',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#ff9800',
-  },
-  confirmText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

@@ -8,6 +8,9 @@
 
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { colors, spacing, typography, radii } from '../../../shared/theme';
+import Banner from '../../../shared/components/Banner';
+import Badge from '../../../shared/components/Badge';
 import SkeletonCard from '../../../shared/components/SkeletonCard';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionCard from '../components/SubmissionCard';
@@ -70,7 +73,7 @@ export default function HistoryScreen() {
         <RefreshControl
           refreshing={loading && submissions.length > 0}
           onRefresh={refresh}
-          tintColor="#4dabf7"
+          tintColor={colors.accent.primary}
         />
       }
     >
@@ -78,17 +81,20 @@ export default function HistoryScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>提出履歴</Text>
         {submissions.length > 0 && (
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{submissions.length}件</Text>
-          </View>
+          <Badge
+            label={`${submissions.length}件`}
+            bg={colors.bg.elevated}
+            color={colors.accent.primary}
+            size="md"
+          />
         )}
       </View>
 
       {/* エラーバナー */}
       {error && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
+        <Banner variant="error" style={styles.errorBanner}>
+          {error}
+        </Banner>
       )}
 
       {/* ローディング（初回のみ） */}
@@ -143,65 +149,43 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.bg.primary,
   },
   content: {
     paddingBottom: 40,
   },
   contentMobile: {
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingBottom: 12,
+    padding: spacing.lg,
+    paddingBottom: spacing.md,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  countBadge: {
-    backgroundColor: '#2d2d44',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  countText: {
-    fontSize: 13,
-    color: '#4dabf7',
-    fontWeight: '600',
+    ...typography.heading3,
+    color: colors.text.primary,
   },
   errorBanner: {
-    backgroundColor: '#3d2f1f',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  errorText: {
-    color: '#ff9800',
-    fontSize: 13,
-    textAlign: 'center',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
   emptyTitle: {
-    fontSize: 18,
+    ...typography.heading4,
     fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 12,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
   emptyDescription: {
-    fontSize: 14,
-    color: '#888',
+    ...typography.body,
+    color: colors.text.muted,
     textAlign: 'center',
     lineHeight: 22,
   },

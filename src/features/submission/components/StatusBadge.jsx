@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import Badge from '../../../shared/components/Badge';
 import { STATUS_CONFIG } from '../../../shared/constants/statusConfig';
 
 /**
@@ -15,24 +15,5 @@ import { STATUS_CONFIG } from '../../../shared/constants/statusConfig';
 export default React.memo(function StatusBadge({ status }) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
 
-  return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.label, { color: config.text }]}>
-        {config.label}
-      </Text>
-    </View>
-  );
-});
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  return <Badge label={config.label} bg={config.bg} color={config.text} />;
 });

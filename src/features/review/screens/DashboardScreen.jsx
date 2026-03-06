@@ -8,6 +8,9 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { colors, spacing, typography } from '../../../shared/theme';
+import Badge from '../../../shared/components/Badge';
+import Banner from '../../../shared/components/Banner';
 import SkeletonCard from '../../../shared/components/SkeletonCard';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionTable from '../components/SubmissionTable';
@@ -44,56 +47,28 @@ export default function DashboardScreen() {
   const [reviewTarget, setReviewTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
 
-  /**
-   * 「審査する」ボタン → ReviewModal
-   */
   const handleReviewPress = useCallback((submission) => {
     clearError();
     setReviewTarget(submission);
   }, [clearError]);
 
-  /**
-   * カードタップ → SubmissionDetailModal
-   */
   const handleDetailPress = useCallback((submission) => {
     setDetailTarget(submission);
   }, []);
 
-  /**
-   * 承認実行
-   */
   const handleApprove = useCallback(async (comment) => {
     if (!reviewTarget) return;
-
-    const success = await review(
-      reviewTarget.id,
-      'approve',
-      comment,
-      reviewTarget.version,
-    );
-
+    const success = await review(reviewTarget.id, 'approve', comment, reviewTarget.version);
     if (success) {
       showSuccess('承認しました');
       setReviewTarget(null);
       refresh();
-    } else {
-      // versionConflict は useReview が管理 — 自動 refresh で最新化
     }
   }, [reviewTarget, review, showSuccess, refresh]);
 
-  /**
-   * 却下実行
-   */
   const handleReject = useCallback(async (comment) => {
     if (!reviewTarget) return;
-
-    const success = await review(
-      reviewTarget.id,
-      'reject',
-      comment,
-      reviewTarget.version,
-    );
-
+    const success = await review(reviewTarget.id, 'reject', comment, reviewTarget.version);
     if (success) {
       showSuccess('却下しました');
       setReviewTarget(null);
@@ -101,9 +76,6 @@ export default function DashboardScreen() {
     }
   }, [reviewTarget, review, showSuccess, refresh]);
 
-  /**
-   * バージョンコンフリクト時の自動リフレッシュ
-   */
   const handleReviewCancel = useCallback(() => {
     if (versionConflict) {
       refresh();
@@ -112,7 +84,6 @@ export default function DashboardScreen() {
     setReviewTarget(null);
   }, [versionConflict, refresh, clearError]);
 
-  /** 未審査件数 */
   const pendingCount = stats.pending;
 
   return (
@@ -123,7 +94,7 @@ export default function DashboardScreen() {
         <RefreshControl
           refreshing={loading && submissions.length > 0}
           onRefresh={refresh}
-          tintColor="#4dabf7"
+          tintColor={colors.accent.primary}
         />
       }
     >
@@ -131,9 +102,13 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>審査ダッシュボード</Text>
         {pendingCount > 0 && (
-          <View style={styles.pendingBadge}>
-            <Text style={styles.pendingText}>未審査 {pendingCount}件</Text>
-          </View>
+          <Badge
+            label={`未審査 ${pendingCount}件`}
+            bg={colors.surfaceTint.warning}
+            color={colors.accent.warning}
+            size="md"
+            style={{ borderWidth: 1, borderColor: colors.accent.warning }}
+          />
         )}
       </View>
 
@@ -147,18 +122,16 @@ export default function DashboardScreen() {
 
       {/* エラーバナー */}
       {(error || reviewError) && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error || reviewError}</Text>
-        </View>
+        <Banner variant="error" style={styles.banner}>
+          {error || reviewError}
+        </Banner>
       )}
 
       {/* バージョンコンフリクト警告 */}
       {versionConflict && (
-        <View style={styles.conflictBanner}>
-          <Text style={styles.conflictText}>
-            他の審査者が先に審査しました。一覧を更新しています...
-          </Text>
-        </View>
+        <Banner variant="info" style={styles.banner}>
+          他の審査者が先に審査しました。一覧を更新しています...
+        </Banner>
       )}
 
       {/* ローディング（初回のみ） */}
@@ -208,65 +181,27 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.bg.primary,
   },
   content: {
     paddingBottom: 40,
   },
   contentMobile: {
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingBottom: 8,
+    padding: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
+    ...typography.heading3,
+    color: colors.text.primary,
   },
-  pendingBadge: {
-    backgroundColor: '#3d3520',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  pendingText: {
-    fontSize: 13,
-    color: '#ff9800',
-    fontWeight: '600',
-  },
-  errorBanner: {
-    backgroundColor: '#3d2f1f',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  errorText: {
-    color: '#ff9800',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  conflictBanner: {
-    backgroundColor: '#1e2d44',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4dabf7',
-  },
-  conflictText: {
-    color: '#4dabf7',
-    fontSize: 13,
-    textAlign: 'center',
+  banner: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
 });

@@ -6,7 +6,10 @@
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { Modal, View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Badge from '../../../shared/components/Badge';
+import Button from '../../../shared/components/Button';
 import { formatDateJST } from '../../../shared/utils/dateFormat';
 import StatusBadge from './StatusBadge';
 import RiskScoreDisplay from './RiskScoreDisplay';
@@ -83,9 +86,7 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
             <View style={styles.badgeRow}>
               <StatusBadge status={submission.status} />
               {autoApproved && (
-                <View style={styles.autoApproveBadge}>
-                  <Text style={styles.autoApproveText}>自動承認</Text>
-                </View>
+                <Badge label="自動承認" bg={colors.surfaceTint.teal} color={colors.accent.teal} />
               )}
             </View>
 
@@ -127,24 +128,24 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
 
             {/* Drive リンク */}
             {submission.drive_file_url && (
-              <TouchableOpacity
-                style={styles.driveButton}
+              <Button
+                variant="outline"
                 onPress={() => Linking.openURL(submission.drive_file_url)}
+                style={styles.linkButton}
               >
-                <Text style={styles.driveButtonText}>Google Drive で開く</Text>
-              </TouchableOpacity>
+                Google Drive で開く
+              </Button>
             )}
 
             {/* AI 判定レポート */}
             {submission.docs_file_url && (
-              <TouchableOpacity
-                style={[styles.driveButton, { borderColor: '#34a853' }]}
+              <Button
+                variant="outline"
                 onPress={() => Linking.openURL(submission.docs_file_url)}
+                style={[styles.linkButton, { borderColor: colors.accent.google }]}
               >
-                <Text style={[styles.driveButtonText, { color: '#34a853' }]}>
-                  AI判定レポートを開く
-                </Text>
-              </TouchableOpacity>
+                AI判定レポートを開く
+              </Button>
             )}
 
             {/* 自動承認免責 */}
@@ -159,9 +160,13 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
           </ScrollView>
 
           {/* 閉じるボタン */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeText}>閉じる</Text>
-          </TouchableOpacity>
+          <Button
+            variant="outline-muted"
+            onPress={onClose}
+            style={styles.closeButton}
+          >
+            閉じる
+          </Button>
         </View>
       </View>
     </Modal>
@@ -171,14 +176,14 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: colors.bg.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   modal: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: colors.bg.primary,
+    borderRadius: radii.xl,
     width: '100%',
     maxWidth: 480,
     maxHeight: '85%',
@@ -188,37 +193,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 16,
+    padding: spacing.xxl,
+    paddingBottom: spacing.lg,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 12,
+    ...typography.heading4,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 20,
-  },
-  autoApproveBadge: {
-    backgroundColor: '#1e3535',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-  },
-  autoApproveText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#26a69a',
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
   },
   metaSection: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.lg,
     padding: 14,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   metaRow: {
     flexDirection: 'row',
@@ -227,73 +220,55 @@ const styles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.muted,
   },
   metaValue: {
     fontSize: 13,
-    color: '#e0e0e0',
+    color: colors.text.secondary,
     fontWeight: '500',
     flexShrink: 1,
     textAlign: 'right',
     maxWidth: '60%',
   },
   riskSection: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 8,
+    ...typography.label,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   commentSection: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
     padding: 14,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   commentText: {
     fontSize: 13,
-    color: '#e0e0e0',
+    color: colors.text.secondary,
     lineHeight: 20,
   },
-  driveButton: {
-    backgroundColor: '#2d2d44',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#4dabf7',
-  },
-  driveButtonText: {
-    color: '#4dabf7',
-    fontSize: 14,
-    fontWeight: '600',
+  linkButton: {
+    marginBottom: spacing.md,
   },
   disclaimerBox: {
-    backgroundColor: '#1e3535',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: colors.surfaceTint.teal,
+    padding: spacing.md,
+    borderRadius: radii.sm,
+    marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: '#26a69a44',
   },
   disclaimerText: {
-    fontSize: 11,
-    color: '#26a69a',
+    ...typography.small,
+    fontWeight: '400',
+    color: colors.accent.teal,
     lineHeight: 18,
     textAlign: 'center',
   },
   closeButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#3d3d5c',
-  },
-  closeText: {
-    color: '#a0a0a0',
-    fontSize: 14,
-    fontWeight: '600',
+    margin: spacing.lg,
+    borderTopWidth: 0,
   },
 });

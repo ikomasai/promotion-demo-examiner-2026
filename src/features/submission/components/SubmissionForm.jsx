@@ -7,6 +7,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Button from '../../../shared/components/Button';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import OrganizationSelect from './OrganizationSelect';
 import ProjectSelect from './ProjectSelect';
@@ -181,72 +183,61 @@ export default function SubmissionForm({
       </View>
 
       {/* 提出ボタン */}
-      <TouchableOpacity
-        style={[styles.submitButton, (!isValid() || isDisabled) && styles.submitButtonDisabled]}
+      <Button
+        variant="primary"
+        size="lg"
         onPress={handleSubmit}
         disabled={!isValid() || isDisabled}
+        loading={loading}
+        style={styles.submitButton}
       >
-        <Text style={styles.submitButtonText}>{loading ? '処理中...' : submitLabel}</Text>
-      </TouchableOpacity>
+        {submitLabel}
+      </Button>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: spacing.lg,
   },
   containerMobile: {
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 8,
+    ...typography.label,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   radioGroup: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   radioButton: {
     flex: 1,
-    backgroundColor: '#2d2d44',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: colors.bg.elevated,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.sm,
     borderWidth: 2,
     borderColor: 'transparent',
     alignItems: 'center',
   },
   radioSelected: {
-    borderColor: '#4dabf7',
+    borderColor: colors.accent.primary,
   },
   radioText: {
-    fontSize: 14,
-    color: '#a0a0a0',
+    ...typography.body,
+    color: colors.text.tertiary,
     fontWeight: '500',
   },
   radioTextSelected: {
-    color: '#4dabf7',
+    color: colors.accent.primary,
   },
   submitButton: {
-    backgroundColor: '#4dabf7',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#666666',
-    opacity: 0.7,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: spacing.sm,
   },
 });

@@ -7,6 +7,9 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Badge from '../../../shared/components/Badge';
+import Button from '../../../shared/components/Button';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { SUBMISSION_TYPE_CONFIG } from '../../../shared/constants/statusConfig';
 import { formatDateJST } from '../../../shared/utils/dateFormat';
@@ -16,10 +19,10 @@ import StatusBadge from '../../submission/components/StatusBadge';
  * リスクスコアの色
  */
 function getScoreColor(score) {
-  if (score === null || score === undefined) return '#a0a0a0';
-  if (score <= 10) return '#4caf50';
-  if (score <= 50) return '#ff9800';
-  return '#f44336';
+  if (score === null || score === undefined) return colors.text.tertiary;
+  if (score <= 10) return colors.accent.success;
+  if (score <= 50) return colors.accent.warning;
+  return colors.accent.danger;
 }
 
 /**
@@ -50,15 +53,9 @@ function ReviewCard({ submission, onReview, onDetail }) {
       <View style={styles.badgeRow}>
         <StatusBadge status={submission.status} />
         {autoApproved && (
-          <View style={styles.autoApproveBadge}>
-            <Text style={styles.autoApproveText}>自動承認</Text>
-          </View>
+          <Badge label="自動承認" bg={colors.surfaceTint.teal} color={colors.accent.teal} />
         )}
-        <View style={[styles.typeBadge, { backgroundColor: typeConfig.bg }]}>
-          <Text style={[styles.typeText, { color: typeConfig.text }]}>
-            {typeConfig.label}
-          </Text>
-        </View>
+        <Badge label={typeConfig.label} bg={typeConfig.bg} color={typeConfig.text} />
       </View>
 
       {/* Row 2: ファイル名 */}
@@ -85,16 +82,17 @@ function ReviewCard({ submission, onReview, onDetail }) {
         </View>
 
         {canReview && (
-          <TouchableOpacity
-            style={styles.reviewButton}
+          <Button
+            variant="outline"
+            size="sm"
             onPress={(e) => {
-              e.stopPropagation?.();
+              e?.stopPropagation?.();
               onReview(submission);
             }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.reviewButton}
           >
-            <Text style={styles.reviewButtonText}>審査する</Text>
-          </TouchableOpacity>
+            審査する
+          </Button>
         )}
       </View>
     </TouchableOpacity>
@@ -103,12 +101,6 @@ function ReviewCard({ submission, onReview, onDetail }) {
 
 /**
  * 提出カードリスト（審査者向け）
- * @param {{
- *   submissions: Array,
- *   onReview: (submission: Object) => void,
- *   onDetail: (submission: Object) => void,
- *   emptyMessage?: string
- * }} props
  */
 export default function SubmissionTable({ submissions, onReview, onDetail, emptyMessage }) {
   if (submissions.length === 0) {
@@ -135,53 +127,33 @@ export default function SubmissionTable({ submissions, onReview, onDetail, empty
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   cardMobile: {
-    padding: 12,
-    marginHorizontal: 8,
+    padding: spacing.md,
+    marginHorizontal: spacing.sm,
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     marginBottom: 10,
     flexWrap: 'wrap',
-  },
-  autoApproveBadge: {
-    backgroundColor: '#1e3535',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-  },
-  autoApproveText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#26a69a',
-  },
-  typeBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-  },
-  typeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
   fileName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.text.primary,
     marginBottom: 6,
   },
   meta: {
     fontSize: 13,
     color: '#b0b0c8',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -195,40 +167,29 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   dateText: {
-    fontSize: 12,
-    color: '#888',
+    ...typography.caption,
+    color: colors.text.muted,
   },
   scoreBadge: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
   },
   scoreText: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...typography.small,
   },
   reviewButton: {
-    backgroundColor: '#1e2d44',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4dabf7',
-  },
-  reviewButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4dabf7',
+    backgroundColor: colors.surfaceTint.primary,
   },
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
   emptyTitle: {
-    fontSize: 16,
-    color: '#888',
+    ...typography.bodyLarge,
+    color: colors.text.muted,
     textAlign: 'center',
   },
 });

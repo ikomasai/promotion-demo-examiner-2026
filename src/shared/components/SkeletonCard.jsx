@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { colors, spacing, radii } from '../theme';
 import SkeletonLoader from './SkeletonLoader';
 
 /**
@@ -39,16 +40,16 @@ export default function SkeletonCard({ style }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   spacer: {
     marginTop: 10,

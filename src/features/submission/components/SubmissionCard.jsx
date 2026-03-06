@@ -7,6 +7,8 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Badge from '../../../shared/components/Badge';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { formatDateJST } from '../../../shared/utils/dateFormat';
 import StatusBadge from './StatusBadge';
@@ -34,16 +36,14 @@ function formatFileSize(bytes) {
  * @param {number|null} score
  */
 function getScoreColor(score) {
-  if (score === null || score === undefined) return '#a0a0a0';
-  if (score <= 10) return '#4caf50';
-  if (score <= 50) return '#ff9800';
-  return '#f44336';
+  if (score === null || score === undefined) return colors.text.tertiary;
+  if (score <= 10) return colors.accent.success;
+  if (score <= 50) return colors.accent.warning;
+  return colors.accent.danger;
 }
 
 /**
  * 自動承認かどうかを判定
- * @param {{ reviewed_by: string|null, status: string }} submission
- * @returns {boolean}
  */
 function isAutoApproved(submission) {
   return submission.reviewed_by === null && submission.status === 'approved';
@@ -74,9 +74,7 @@ export default React.memo(function SubmissionCard({ submission, onPress, onDelet
       <View style={styles.badgeRow}>
         <StatusBadge status={submission.status} />
         {autoApproved && (
-          <View style={styles.autoApproveBadge}>
-            <Text style={styles.autoApproveText}>自動承認</Text>
-          </View>
+          <Badge label="自動承認" bg={colors.surfaceTint.teal} color={colors.accent.teal} />
         )}
       </View>
 
@@ -107,8 +105,8 @@ export default React.memo(function SubmissionCard({ submission, onPress, onDelet
               </Text>
             </View>
           ) : (
-            <View style={[styles.scoreBadge, { borderColor: '#a0a0a0' }]}>
-              <Text style={[styles.scoreText, { color: '#a0a0a0' }]}>AI判定なし</Text>
+            <View style={[styles.scoreBadge, { borderColor: colors.text.tertiary }]}>
+              <Text style={[styles.scoreText, { color: colors.text.tertiary }]}>AI判定なし</Text>
             </View>
           )}
           {submission.file_size_bytes > 0 && (
@@ -135,48 +133,37 @@ export default React.memo(function SubmissionCard({ submission, onPress, onDelet
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   cardMobile: {
-    padding: 12,
-    marginHorizontal: 8,
+    padding: spacing.md,
+    marginHorizontal: spacing.sm,
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     marginBottom: 10,
-  },
-  autoApproveBadge: {
-    backgroundColor: '#1e3535',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-  },
-  autoApproveText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#26a69a',
   },
   fileName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.text.primary,
     marginBottom: 6,
   },
   meta: {
     fontSize: 13,
     color: '#b0b0c8',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   subMeta: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 12,
+    ...typography.caption,
+    color: colors.text.muted,
+    marginBottom: spacing.md,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -190,27 +177,27 @@ const styles = StyleSheet.create({
   },
   scoreBadge: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
   },
   scoreText: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...typography.small,
   },
   fileSize: {
-    fontSize: 11,
-    color: '#888',
+    ...typography.small,
+    fontWeight: '400',
+    color: colors.text.muted,
   },
   deleteButton: {
-    backgroundColor: '#3d1e1e',
+    backgroundColor: colors.surfaceTint.danger,
     paddingVertical: 6,
     paddingHorizontal: 14,
-    borderRadius: 8,
+    borderRadius: radii.sm,
   },
   deleteText: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '600',
-    color: '#f44336',
+    color: colors.accent.danger,
   },
 });

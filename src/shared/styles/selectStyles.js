@@ -4,17 +4,18 @@
  */
 
 import { StyleSheet } from 'react-native';
+import { colors, radii, spacing } from '../theme';
 
 /** React Native StyleSheet（loading, error 用） */
 export const selectNativeStyles = StyleSheet.create({
   loadingContainer: {
-    backgroundColor: '#2d2d44',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: colors.bg.elevated,
+    padding: spacing.lg,
+    borderRadius: radii.sm,
     alignItems: 'center',
   },
   error: {
-    color: '#f44336',
+    color: colors.accent.danger,
     fontSize: 12,
   },
 });
@@ -23,10 +24,10 @@ export const selectNativeStyles = StyleSheet.create({
 export const selectInlineStyle = {
   width: '100%',
   padding: '12px 16px',
-  backgroundColor: '#2d2d44',
+  backgroundColor: colors.bg.elevated,
   color: '#fff',
-  border: '1px solid #3d3d5c',
-  borderRadius: '8px',
+  border: `1px solid ${colors.border.default}`,
+  borderRadius: `${radii.sm}px`,
   fontSize: '14px',
   appearance: 'auto',
   cursor: 'pointer',

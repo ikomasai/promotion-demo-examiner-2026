@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors, spacing, radii, typography } from '../theme';
 
 /**
  * エラーバウンダリ状態
@@ -85,31 +86,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    padding: 20,
+    backgroundColor: colors.bg.primary,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#f44336',
-    marginBottom: 12,
+    ...typography.heading3,
+    color: colors.accent.danger,
+    marginBottom: spacing.md,
   },
   message: {
-    fontSize: 14,
-    color: '#a0a0a0',
+    ...typography.body,
+    color: colors.text.tertiary,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
     maxWidth: 300,
   },
   button: {
-    backgroundColor: '#4dabf7',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.accent.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radii.sm,
   },
   buttonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.label,
+    color: colors.text.primary,
   },
 });

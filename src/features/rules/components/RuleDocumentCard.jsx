@@ -6,7 +6,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Badge from '../../../shared/components/Badge';
+import Button from '../../../shared/components/Button';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { DOCUMENT_TYPE_CONFIG } from '../../../shared/constants/statusConfig';
 import { formatDateJST } from '../../../shared/utils/dateFormat';
@@ -14,11 +17,6 @@ import SimpleMarkdown from './SimpleMarkdown';
 
 /**
  * ルール文書カード
- * @param {{
- *   document: Object,
- *   onEdit: (document: Object) => void,
- *   canEdit: boolean
- * }} props
  */
 export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit }) {
   const { isMobile } = useResponsive();
@@ -28,11 +26,7 @@ export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit 
     <View style={[styles.card, isMobile && styles.cardMobile]}>
       {/* ヘッダー: バッジ + バージョン */}
       <View style={styles.headerRow}>
-        <View style={[styles.badge, { backgroundColor: typeConfig.bg }]}>
-          <Text style={[styles.badgeText, { color: typeConfig.text }]}>
-            {typeConfig.label}
-          </Text>
-        </View>
+        <Badge label={typeConfig.label} bg={typeConfig.bg} color={typeConfig.text} />
         <Text style={styles.version}>v{document.version}</Text>
       </View>
 
@@ -44,7 +38,6 @@ export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit 
         最終更新: {formatDateJST(document.updated_at)}
       </Text>
 
-      {/* 区切り線 */}
       <View style={styles.divider} />
 
       {/* Markdown 本文 */}
@@ -54,12 +47,14 @@ export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit 
       {canEdit && (
         <>
           <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.editButton}
+          <Button
+            variant="outline"
+            size="sm"
             onPress={() => onEdit(document)}
+            style={styles.editButton}
           >
-            <Text style={styles.editText}>編集する</Text>
-          </TouchableOpacity>
+            編集する
+          </Button>
         </>
       )}
     </View>
@@ -68,15 +63,15 @@ export default React.memo(function RuleDocumentCard({ document, onEdit, canEdit 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   cardMobile: {
-    padding: 12,
-    marginHorizontal: 8,
+    padding: spacing.md,
+    marginHorizontal: spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
@@ -84,46 +79,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
   version: {
-    fontSize: 12,
-    color: '#888',
+    ...typography.caption,
+    color: colors.text.muted,
     fontWeight: '600',
   },
   title: {
-    fontSize: 16,
+    ...typography.bodyLarge,
     fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 4,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
   },
   updatedAt: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 12,
+    ...typography.caption,
+    color: colors.text.muted,
+    marginBottom: spacing.md,
   },
   divider: {
     height: 1,
-    backgroundColor: '#3d3d5c',
-    marginVertical: 12,
+    backgroundColor: colors.border.default,
+    marginVertical: spacing.md,
   },
   editButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#1e2d44',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  editText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4dabf7',
+    backgroundColor: colors.surfaceTint.primary,
   },
 });

@@ -12,28 +12,26 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   ScrollView,
   Linking,
 } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Button from '../../../shared/components/Button';
 
 /**
  * リスクスコアの色とラベル
  */
 function getRiskInfo(score) {
   if (score === null || score === undefined)
-    return { color: '#a0a0a0', label: '判定なし', bg: '#2d2d44' };
-  if (score <= 10) return { color: '#4caf50', label: '低リスク', bg: '#1e3525' };
-  if (score <= 50) return { color: '#ff9800', label: '中リスク', bg: '#3d3520' };
-  return { color: '#f44336', label: '高リスク', bg: '#3d1e1e' };
+    return { color: colors.text.tertiary, label: '判定なし', bg: colors.bg.elevated };
+  if (score <= 10) return { color: colors.accent.success, label: '低リスク', bg: colors.surfaceTint.success };
+  if (score <= 50) return { color: colors.accent.warning, label: '中リスク', bg: colors.surfaceTint.warning };
+  return { color: colors.accent.danger, label: '高リスク', bg: colors.surfaceTint.danger };
 }
 
 /**
  * AI 指摘事項から flagged items を抽出
- * @param {Object|null} riskDetails
- * @returns {Array<{name: string, comment: string}>}
  */
 function extractFlaggedItems(riskDetails) {
   if (!riskDetails || !Array.isArray(riskDetails.items)) return [];
@@ -61,7 +59,6 @@ export default function ReviewModal({
 }) {
   const [comment, setComment] = useState('');
 
-  // モーダルが開かれる度にコメントをリセット
   useEffect(() => {
     if (visible) {
       setComment('');
@@ -108,12 +105,14 @@ export default function ReviewModal({
 
             {/* AI 判定レポート */}
             {submission.docs_file_url && (
-              <TouchableOpacity
-                style={styles.docsLink}
+              <Button
+                variant="outline"
+                size="sm"
                 onPress={() => Linking.openURL(submission.docs_file_url)}
+                style={[styles.docsLink, { borderColor: colors.accent.google }]}
               >
-                <Text style={styles.docsLinkText}>AI判定レポートを開く</Text>
-              </TouchableOpacity>
+                AI判定レポートを開く
+              </Button>
             )}
 
             {/* AI リスクスコア */}
@@ -155,7 +154,7 @@ export default function ReviewModal({
                 value={comment}
                 onChangeText={setComment}
                 placeholder="コメントを入力..."
-                placeholderTextColor="#666"
+                placeholderTextColor={colors.text.disabled}
                 multiline
                 numberOfLines={3}
                 editable={!reviewing}
@@ -165,35 +164,35 @@ export default function ReviewModal({
 
           {/* アクションボタン */}
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.rejectButton, (!canReject || reviewing) && styles.buttonDisabled]}
+            <Button
+              variant="danger"
               onPress={() => onReject(comment.trim())}
               disabled={!canReject || reviewing}
+              loading={reviewing}
+              style={styles.flex}
             >
-              {reviewing ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.rejectText}>却下する</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.approveButton, reviewing && styles.buttonDisabled]}
+              却下する
+            </Button>
+            <Button
+              variant="success"
               onPress={() => onApprove(comment.trim() || null)}
               disabled={reviewing}
+              loading={reviewing}
+              style={styles.flex}
             >
-              {reviewing ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.approveText}>承認する</Text>
-              )}
-            </TouchableOpacity>
+              承認する
+            </Button>
           </View>
 
           {/* キャンセル */}
-          <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={reviewing}>
-            <Text style={styles.cancelText}>キャンセル</Text>
-          </TouchableOpacity>
+          <Button
+            variant="outline-muted"
+            onPress={onCancel}
+            disabled={reviewing}
+            style={styles.cancelButton}
+          >
+            キャンセル
+          </Button>
         </View>
       </View>
     </Modal>
@@ -203,14 +202,14 @@ export default function ReviewModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: colors.bg.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   modal: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: colors.bg.primary,
+    borderRadius: radii.xl,
     width: '100%',
     maxWidth: 480,
     maxHeight: '85%',
@@ -220,36 +219,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 16,
+    padding: spacing.xxl,
+    paddingBottom: spacing.lg,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
+    ...typography.heading4,
+    color: colors.text.primary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   fileInfo: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
     padding: 14,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   fileName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e0e0e0',
-    marginBottom: 4,
+    ...typography.label,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
   },
   fileMeta: {
-    fontSize: 12,
-    color: '#888',
+    ...typography.caption,
+    color: colors.text.muted,
+  },
+  docsLink: {
+    marginBottom: spacing.md,
   },
   riskBox: {
-    borderRadius: 10,
+    borderRadius: radii.md,
     padding: 14,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   riskHeader: {
     flexDirection: 'row',
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   riskLabel: {
-    fontSize: 14,
+    ...typography.label,
     fontWeight: '700',
   },
   riskScore: {
@@ -265,26 +265,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   flaggedSection: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
     padding: 14,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   flaggedTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#ff9800',
+    color: colors.accent.warning,
     marginBottom: 10,
   },
   flaggedItem: {
     flexDirection: 'row',
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   flaggedBullet: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '700',
-    color: '#ff9800',
+    color: colors.accent.warning,
     marginTop: 1,
   },
   flaggedContent: {
@@ -293,92 +293,46 @@ const styles = StyleSheet.create({
   flaggedName: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#e0e0e0',
+    color: colors.text.secondary,
   },
   flaggedComment: {
-    fontSize: 12,
-    color: '#a0a0a0',
+    ...typography.caption,
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   commentSection: {
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   commentLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   commentHint: {
     fontWeight: '400',
-    color: '#888',
+    color: colors.text.muted,
   },
   commentInput: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 10,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radii.md,
     padding: 14,
-    color: '#e0e0e0',
-    fontSize: 14,
+    color: colors.text.secondary,
+    ...typography.body,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    gap: spacing.md,
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.sm,
   },
-  rejectButton: {
+  flex: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#f44336',
-  },
-  approveButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#4caf50',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  rejectText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  approveText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
   },
   cancelButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#3d3d5c',
-    marginTop: 8,
-  },
-  cancelText: {
-    color: '#a0a0a0',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  docsLink: {
-    backgroundColor: '#2d2d44',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#34a853',
-  },
-  docsLinkText: {
-    color: '#34a853',
-    fontSize: 13,
-    fontWeight: '600',
+    margin: spacing.lg,
+    marginTop: spacing.sm,
   },
 });

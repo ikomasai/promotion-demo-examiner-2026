@@ -6,15 +6,11 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
+import { colors, spacing, typography, radii } from '../../../shared/theme';
+import Button from '../../../shared/components/Button';
+import Banner from '../../../shared/components/Banner';
 import SubmissionForm from '../components/SubmissionForm';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
 import SubmissionConfirmModal from '../components/SubmissionConfirmModal';
@@ -207,53 +203,50 @@ export default function SubmitScreen() {
       <View style={styles.riskActions}>
         {/* 低リスク: 直接提出 */}
         {riskLevel === 'low' && (
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>提出する</Text>
-          </TouchableOpacity>
+          <Button variant="primary" size="lg" onPress={handleSubmit} style={styles.actionButton}>
+            提出する
+          </Button>
         )}
 
         {/* 中リスク: 確認モーダル経由 */}
         {riskLevel === 'medium' && (
-          <TouchableOpacity
-            style={[styles.submitButton, styles.submitButtonWarning]}
+          <Button
+            variant="warning"
+            size="lg"
             onPress={() => setConfirmModalVisible(true)}
+            style={styles.actionButton}
           >
-            <Text style={styles.submitButtonText}>提出する</Text>
-          </TouchableOpacity>
+            提出する
+          </Button>
         )}
 
         {/* 高リスク: 理由入力 + 提出 */}
         {riskLevel === 'high' && (
           <>
             <HighRiskReasonInput value={userComment} onChange={setUserComment} disabled={false} />
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                styles.submitButtonDanger,
-                !isHighRiskReasonValid && styles.submitButtonDisabled,
-              ]}
+            <Button
+              variant="danger"
+              size="lg"
               onPress={handleSubmit}
               disabled={!isHighRiskReasonValid}
+              style={styles.actionButton}
             >
-              <Text style={styles.submitButtonText}>提出する</Text>
-            </TouchableOpacity>
+              提出する
+            </Button>
           </>
         )}
 
         {/* スキップ: AI判定なしで提出 */}
         {riskLevel === 'skipped' && (
-          <TouchableOpacity
-            style={[styles.submitButton, styles.submitButtonMuted]}
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitButtonText}>AI判定なしで提出する</Text>
-          </TouchableOpacity>
+          <Button variant="muted" size="lg" onPress={handleSubmit} style={styles.actionButton}>
+            AI判定なしで提出する
+          </Button>
         )}
 
         {/* やり直しボタン（全リスクレベル共通） */}
-        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Text style={styles.resetButtonText}>やり直す</Text>
-        </TouchableOpacity>
+        <Button variant="outline" onPress={handleReset} style={styles.actionButton}>
+          やり直す
+        </Button>
       </View>
     );
   }, [
@@ -277,9 +270,9 @@ export default function SubmitScreen() {
 
       {/* エラー表示 */}
       {error && phase !== 'done' && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
+        <Banner variant="error" style={styles.errorBanner}>
+          {error}
+        </Banner>
       )}
 
       {/* フォームフェーズ */}
@@ -295,15 +288,19 @@ export default function SubmitScreen() {
       {/* AI判定実行中フェーズ */}
       {phase === 'executing' && (
         <View style={styles.executingContainer}>
-          <ActivityIndicator size="large" color="#4dabf7" />
+          <ActivityIndicator size="large" color={colors.accent.primary} />
           <Text style={styles.executingText}>AI判定を実行中...</Text>
           <Text style={styles.executingHint}>
             ファイルをAIが分析しています。しばらくお待ちください。
           </Text>
           {showSkipButton && (
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-              <Text style={styles.skipButtonText}>AI判定をスキップ</Text>
-            </TouchableOpacity>
+            <Button
+              variant="outline-warning"
+              onPress={handleSkip}
+              style={{ marginTop: spacing.xxl }}
+            >
+              AI判定をスキップ
+            </Button>
           )}
         </View>
       )}
@@ -340,7 +337,7 @@ export default function SubmitScreen() {
                 {i < submitStep ? (
                   <Text style={styles.stepDone}>✓</Text>
                 ) : i === submitStep ? (
-                  <ActivityIndicator size="small" color="#4dabf7" />
+                  <ActivityIndicator size="small" color={colors.accent.primary} />
                 ) : (
                   <Text style={styles.stepPending}>{i + 1}</Text>
                 )}
@@ -368,16 +365,14 @@ export default function SubmitScreen() {
           <Text style={styles.doneMessage}>正式提出が完了しました。審査結果をお待ちください。</Text>
 
           {submitResult.auto_approved && (
-            <View style={styles.autoApproveBanner}>
-              <Text style={styles.autoApproveText}>
-                自動承認されました（リスクスコア: {submitResult.ai_risk_score}%）
-              </Text>
-            </View>
+            <Banner variant="success" style={styles.autoApproveBanner}>
+              自動承認されました（リスクスコア: {submitResult.ai_risk_score}%）
+            </Banner>
           )}
 
-          <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-            <Text style={styles.resetButtonText}>新しい提出を行う</Text>
-          </TouchableOpacity>
+          <Button variant="outline" onPress={handleReset} style={styles.actionButton}>
+            新しい提出を行う
+          </Button>
         </View>
       )}
 
@@ -395,52 +390,41 @@ export default function SubmitScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.bg.primary,
   },
   content: {
     paddingBottom: 40,
   },
   contentMobile: {
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   header: {
-    padding: 16,
-    paddingBottom: 8,
+    padding: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
+    ...typography.heading3,
+    color: colors.text.primary,
   },
   errorBanner: {
-    backgroundColor: '#3d2f1f',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  errorText: {
-    color: '#ff9800',
-    fontSize: 13,
-    textAlign: 'center',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   executingContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
   executingText: {
-    fontSize: 18,
+    ...typography.heading4,
     fontWeight: '600',
-    color: '#ffffff',
-    marginTop: 20,
+    color: colors.text.primary,
+    marginTop: spacing.xl,
   },
   executingHint: {
     fontSize: 13,
-    color: '#888',
-    marginTop: 8,
+    color: colors.text.muted,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
   progressBarBg: {
@@ -448,15 +432,15 @@ const styles = StyleSheet.create({
     height: 4,
     backgroundColor: '#2a2a3e',
     borderRadius: 2,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   progressBarFill: {
     height: 4,
-    backgroundColor: '#4dabf7',
+    backgroundColor: colors.accent.primary,
     borderRadius: 2,
   },
   stepList: {
-    marginTop: 24,
+    marginTop: spacing.xxl,
     width: '100%',
     maxWidth: 320,
   },
@@ -481,108 +465,48 @@ const styles = StyleSheet.create({
   },
   stepLabel: {
     fontSize: 15,
-    marginLeft: 12,
+    marginLeft: spacing.md,
   },
   stepLabelDone: {
-    color: '#888',
+    color: colors.text.muted,
   },
   stepLabelActive: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontWeight: '600',
   },
   stepLabelPending: {
     color: '#555',
   },
-  skipButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff9800',
-  },
-  skipButtonText: {
-    color: '#ff9800',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   riskActions: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
-  submitButton: {
-    backgroundColor: '#4dabf7',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  submitButtonWarning: {
-    backgroundColor: '#ff9800',
-  },
-  submitButtonDanger: {
-    backgroundColor: '#f44336',
-  },
-  submitButtonMuted: {
-    backgroundColor: '#666',
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  resetButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4dabf7',
-    marginTop: 12,
-  },
-  resetButtonText: {
-    color: '#4dabf7',
-    fontSize: 14,
-    fontWeight: '600',
+  actionButton: {
+    marginTop: spacing.md,
   },
   doneContainer: {
     alignItems: 'center',
     paddingVertical: 40,
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
   doneIcon: {
     fontSize: 48,
-    color: '#4caf50',
-    marginBottom: 16,
+    color: colors.accent.success,
+    marginBottom: spacing.lg,
   },
   doneTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 8,
+    ...typography.heading2,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   doneMessage: {
-    fontSize: 14,
-    color: '#a0a0a0',
+    ...typography.body,
+    color: colors.text.tertiary,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   autoApproveBanner: {
-    backgroundColor: '#1b3a1b',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4caf50',
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
     width: '100%',
-  },
-  autoApproveText: {
-    color: '#4caf50',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });

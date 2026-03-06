@@ -5,14 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, radii, typography } from '../../../shared/theme';
+import Button from '../../../shared/components/Button';
+import FormInput from '../../../shared/components/FormInput';
+import Banner from '../../../shared/components/Banner';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { ALLOWED_DOMAIN } from '../../../shared/utils/validateEmail';
@@ -65,52 +62,47 @@ export default function LoginScreen() {
 
       {/* フォーム */}
       <View style={[styles.form, isMobile && styles.formMobile]}>
-        <Text style={styles.label}>メールアドレス</Text>
-        <TextInput
-          style={styles.input}
+        <FormInput
+          label="メールアドレス"
           value={email}
           onChangeText={setEmail}
           placeholder="example@kindai.ac.jp"
-          placeholderTextColor="#666"
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
           editable={!loading}
+          style={styles.field}
         />
 
-        <Text style={styles.label}>パスワード</Text>
-        <TextInput
-          style={styles.input}
+        <FormInput
+          label="パスワード"
           value={password}
           onChangeText={setPassword}
           placeholder="6文字以上"
-          placeholderTextColor="#666"
           secureTextEntry
           autoComplete="current-password"
           editable={!loading}
+          style={styles.field}
         />
 
         {/* エラーメッセージ */}
         {displayError && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{displayError}</Text>
-          </View>
+          <Banner variant="error" style={styles.errorBanner}>
+            {displayError}
+          </Banner>
         )}
 
         {/* 送信ボタン */}
-        <TouchableOpacity
+        <Button
           testID="submit-button"
-          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          variant="primary"
+          size="lg"
           onPress={handleSubmit}
           disabled={loading}
-          activeOpacity={0.8}
+          loading={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#ffffff" size="small" />
-          ) : (
-            <Text style={styles.submitButtonText}>ログイン</Text>
-          )}
-        </TouchableOpacity>
+          ログイン
+        </Button>
       </View>
 
       {/* フッター */}
@@ -124,25 +116,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    padding: 20,
+    backgroundColor: colors.bg.primary,
+    padding: spacing.xl,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   titleMobile: {
     fontSize: 26,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#4dabf7',
+    ...typography.bodyLarge,
+    color: colors.accent.primary,
     fontWeight: '500',
   },
   form: {
@@ -152,52 +144,16 @@ const styles = StyleSheet.create({
   formMobile: {
     maxWidth: 320,
   },
-  label: {
-    fontSize: 14,
-    color: '#a0a0a0',
-    marginBottom: 6,
+  field: {
+    marginBottom: spacing.lg,
   },
-  input: {
-    backgroundColor: '#16213e',
-    borderWidth: 1,
-    borderColor: '#333',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#ffffff',
-    marginBottom: 16,
-  },
-  errorContainer: {
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    borderWidth: 1,
-    borderColor: '#f44336',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#f44336',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  submitButton: {
-    backgroundColor: '#4dabf7',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+  errorBanner: {
+    marginBottom: spacing.lg,
   },
   footer: {
     position: 'absolute',
     bottom: 40,
-    fontSize: 12,
-    color: '#666666',
+    ...typography.caption,
+    color: colors.text.disabled,
   },
 });

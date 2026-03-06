@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { colors, spacing } from '../theme';
 
 /**
  * ローディングスピナー
@@ -18,7 +19,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 export default function LoadingSpinner({ message = '読み込み中...', size = 'large' }) {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size={size} color="#4dabf7" />
+      <ActivityIndicator size={size} color={colors.accent.primary} />
       {message && <Text style={styles.message}>{message}</Text>}
     </View>
   );
@@ -29,12 +30,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    padding: 20,
+    backgroundColor: colors.bg.primary,
+    padding: spacing.xl,
   },
   message: {
-    marginTop: 16,
+    marginTop: spacing.lg,
     fontSize: 14,
-    color: '#a0a0a0',
+    color: colors.text.tertiary,
   },
 });
