@@ -37,6 +37,7 @@ export default function SubmitScreen() {
   const {
     preChecking,
     submitting,
+    submitProgress,
     precheckResult,
     submitResult,
     error,
@@ -56,6 +57,10 @@ export default function SubmitScreen() {
   /** AI スキップボタン表示フラグ */
   const [showSkipButton, setShowSkipButton] = useState(false);
 
+  /** 経過秒数 */
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const elapsedTimerRef = useRef(null);
+
   /** ユーザーが手動スキップしたかどうか */
   const skippedByUserRef = useRef(false);
 
@@ -68,9 +73,7 @@ export default function SubmitScreen() {
   /** 高リスク時のユーザーコメント */
   const [userComment, setUserComment] = useState('');
 
-  /** 提出中ステップ進捗 */
-  const [submitStep, setSubmitStep] = useState(0);
-  const submitTimersRef = useRef([]);
+  /** 提出中ステップ（submitProgress から算出） */
 
   // preChecking 開始でフェーズ遷移
   useEffect(() => {
@@ -78,6 +81,11 @@ export default function SubmitScreen() {
       setPhase('executing');
       setShowSkipButton(false);
       skippedByUserRef.current = false;
+      setElapsedSeconds(0);
+      // 経過秒数カウント
+      elapsedTimerRef.current = setInterval(() => {
+        setElapsedSeconds((s) => s + 1);
+      }, 1000);
       skipTimerRef.current = setTimeout(() => {
         setShowSkipButton(true);
       }, 30000);
@@ -86,6 +94,10 @@ export default function SubmitScreen() {
       if (skipTimerRef.current) {
         clearTimeout(skipTimerRef.current);
         skipTimerRef.current = null;
+      }
+      if (elapsedTimerRef.current) {
+        clearInterval(elapsedTimerRef.current);
+        elapsedTimerRef.current = null;
       }
     };
   }, [preChecking]);
@@ -101,19 +113,14 @@ export default function SubmitScreen() {
     }
   }, [precheckResult, error, preChecking, phase]);
 
-  // submitting 状態でフェーズ遷移 + ステップ進捗タイマー
+  // submitProgress からステップを算出（25%区切り: 0-24→0, 25-49→1, 50-74→2, 75-100→3）
+  const submitStep = Math.min(Math.floor(submitProgress / 25), 3);
+
+  // submitting 状態でフェーズ遷移
   useEffect(() => {
     if (submitting) {
       setPhase('submitting');
-      setSubmitStep(0);
-      const delays = [3000, 7000, 10000]; // ステップ 1→2→3 への遷移タイミング
-      const timers = delays.map((delay, i) => setTimeout(() => setSubmitStep(i + 1), delay));
-      submitTimersRef.current = timers;
     }
-    return () => {
-      submitTimersRef.current.forEach(clearTimeout);
-      submitTimersRef.current = [];
-    };
   }, [submitting]);
 
   // submit 完了でフェーズ遷移
@@ -272,6 +279,16 @@ export default function SubmitScreen() {
       {error && phase !== 'done' && (
         <Banner variant="error" style={styles.errorBanner}>
           {error}
+          {(phase === 'form' || phase === 'risk_check') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={handleReset}
+              style={{ marginTop: spacing.sm }}
+            >
+              やり直す
+            </Button>
+          )}
         </Banner>
       )}
 
@@ -289,15 +306,15 @@ export default function SubmitScreen() {
       {phase === 'executing' && (
         <View style={styles.executingContainer}>
           <ActivityIndicator size="large" color={colors.accent.primary} />
-          <Text style={styles.executingText}>AI判定を実行中...</Text>
-          <Text style={styles.executingHint}>
-            ファイルをAIが分析しています。しばらくお待ちください。
-          </Text>
+          <Text style={styles.executingText}>AI分析中... ({elapsedSeconds}秒)</Text>
+          <Banner variant="info" style={styles.executingBanner}>
+            通常10〜20秒程度で完了します
+          </Banner>
           {showSkipButton && (
             <Button
               variant="outline-warning"
               onPress={handleSkip}
-              style={{ marginTop: spacing.xxl }}
+              style={{ marginTop: spacing.md }}
             >
               AI判定をスキップ
             </Button>
@@ -319,9 +336,7 @@ export default function SubmitScreen() {
         <View style={styles.executingContainer}>
           {/* 進捗バー */}
           <View style={styles.progressBarBg}>
-            <View
-              style={[styles.progressBarFill, { width: `${Math.min((submitStep + 1) * 25, 95)}%` }]}
-            />
+            <View style={[styles.progressBarFill, { width: `${submitProgress}%` }]} />
           </View>
           <Text style={styles.executingHint}>正式提出を処理しています...</Text>
 
@@ -420,6 +435,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text.primary,
     marginTop: spacing.xl,
+  },
+  executingBanner: {
+    marginTop: spacing.lg,
+    maxWidth: 320,
   },
   executingHint: {
     fontSize: 13,

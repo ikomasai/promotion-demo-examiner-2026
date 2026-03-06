@@ -10,6 +10,20 @@ import { supabase } from '../../../services/supabase/client';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 
 /**
+ * エラーからユーザー向けメッセージを生成
+ */
+function getErrorMessage(err, fallback) {
+  const msg = err?.message?.toLowerCase?.() ?? '';
+  if (msg.includes('network') || msg.includes('fetch')) {
+    return 'ネットワーク接続を確認して再度お試しください';
+  }
+  if (msg.includes('timeout') || msg.includes('timed out')) {
+    return 'サーバーの応答がありません。時間をおいて再度お試しください';
+  }
+  return err?.message ? `${fallback}: ${err.message}` : fallback;
+}
+
+/**
  * JST での本日の日付を YYYY-MM-DD 形式で取得
  */
 function getTodayJST() {
@@ -52,9 +66,8 @@ export function usePrecheck() {
   }, []);
 
   // 有効カウント（JST 日付が異なればリセット）
-  const effectiveCount = profile?.sandboxCountDate === getTodayJST()
-    ? (profile?.sandboxCountToday ?? 0)
-    : 0;
+  const effectiveCount =
+    profile?.sandboxCountDate === getTodayJST() ? (profile?.sandboxCountToday ?? 0) : 0;
 
   const remainingCount = Math.max(0, dailyLimit - effectiveCount);
   const isLimitReached = remainingCount <= 0;
@@ -63,44 +76,47 @@ export function usePrecheck() {
    * 事前チェック実行
    * @param {{ organizationId, projectId, mediaType, submissionType, file }} formData
    */
-  const executePrecheck = useCallback(async (formData) => {
-    setExecuting(true);
-    setError(null);
-    setResult(null);
+  const executePrecheck = useCallback(
+    async (formData) => {
+      setExecuting(true);
+      setError(null);
+      setResult(null);
 
-    try {
-      const body = new FormData();
-      body.append('file', formData.file);
-      body.append('organizationId', formData.organizationId);
-      body.append('projectId', formData.projectId);
-      body.append('mediaType', formData.mediaType);
-      body.append('submissionType', formData.submissionType);
+      try {
+        const body = new FormData();
+        body.append('file', formData.file);
+        body.append('organizationId', formData.organizationId);
+        body.append('projectId', formData.projectId);
+        body.append('mediaType', formData.mediaType);
+        body.append('submissionType', formData.submissionType);
 
-      const { data, error: invokeError } = await supabase.functions.invoke('sandbox', {
-        body,
-      });
+        const { data, error: invokeError } = await supabase.functions.invoke('sandbox', {
+          body,
+        });
 
-      if (invokeError) {
-        setError(invokeError.message || '事前チェックの実行に失敗しました');
-        return;
+        if (invokeError) {
+          setError(invokeError.message || '事前チェックの実行に失敗しました');
+          return;
+        }
+
+        if (data?.error) {
+          setError(data.error);
+          return;
+        }
+
+        setResult(data);
+
+        // カウント更新のためプロフィールを再取得
+        await refreshProfile();
+      } catch (err) {
+        setError(getErrorMessage(err, '事前チェックに失敗しました'));
+        console.error('executePrecheck error:', err);
+      } finally {
+        setExecuting(false);
       }
-
-      if (data?.error) {
-        setError(data.error);
-        return;
-      }
-
-      setResult(data);
-
-      // カウント更新のためプロフィールを再取得
-      await refreshProfile();
-    } catch (err) {
-      setError('予期しないエラーが発生しました');
-      console.error('executePrecheck error:', err);
-    } finally {
-      setExecuting(false);
-    }
-  }, [refreshProfile]);
+    },
+    [refreshProfile],
+  );
 
   /**
    * 結果をクリアしてフォームに戻る

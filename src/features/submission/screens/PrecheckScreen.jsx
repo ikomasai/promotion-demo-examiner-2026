@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography } from '../../../shared/theme';
 import Badge from '../../../shared/components/Badge';
 import Banner from '../../../shared/components/Banner';
@@ -25,6 +26,7 @@ export default function PrecheckScreen() {
   const { remainingCount, isLimitReached, executing, result, error, executePrecheck, clearResult } =
     usePrecheck();
 
+  const navigation = useNavigation();
   const { isMobile } = useResponsive();
 
   /** 画面フェーズ管理 */
@@ -32,6 +34,10 @@ export default function PrecheckScreen() {
 
   /** AI スキップボタン表示フラグ（30秒後に表示） */
   const [showSkipButton, setShowSkipButton] = useState(false);
+
+  /** 経過秒数 */
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const elapsedTimerRef = useRef(null);
 
   /** ユーザーが手動スキップしたかどうか */
   const skippedByUserRef = useRef(false);
@@ -45,6 +51,11 @@ export default function PrecheckScreen() {
       setPhase('executing');
       setShowSkipButton(false);
       skippedByUserRef.current = false;
+      setElapsedSeconds(0);
+      // 経過秒数カウント
+      elapsedTimerRef.current = setInterval(() => {
+        setElapsedSeconds((s) => s + 1);
+      }, 1000);
       // 30秒後にスキップボタン表示
       skipTimerRef.current = setTimeout(() => {
         setShowSkipButton(true);
@@ -54,6 +65,10 @@ export default function PrecheckScreen() {
       if (skipTimerRef.current) {
         clearTimeout(skipTimerRef.current);
         skipTimerRef.current = null;
+      }
+      if (elapsedTimerRef.current) {
+        clearInterval(elapsedTimerRef.current);
+        elapsedTimerRef.current = null;
       }
     };
   }, [executing]);
@@ -137,6 +152,16 @@ export default function PrecheckScreen() {
       {error && phase !== 'result' && (
         <Banner variant="warning" style={styles.banner}>
           {error}
+          {phase === 'form' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={handleReset}
+              style={{ marginTop: spacing.sm }}
+            >
+              リトライ
+            </Button>
+          )}
         </Banner>
       )}
 
@@ -154,15 +179,15 @@ export default function PrecheckScreen() {
       {phase === 'executing' && (
         <View style={styles.executingContainer}>
           <ActivityIndicator size="large" color={colors.accent.primary} />
-          <Text style={styles.executingText}>AI判定を実行中...</Text>
-          <Text style={styles.executingHint}>
-            ファイルをAIが分析しています。しばらくお待ちください。
-          </Text>
+          <Text style={styles.executingText}>AI分析中... ({elapsedSeconds}秒)</Text>
+          <Banner variant="info" style={styles.executingBanner}>
+            通常10〜20秒程度で完了します
+          </Banner>
           {showSkipButton && (
             <Button
               variant="outline-warning"
               onPress={handleSkip}
-              style={{ marginTop: spacing.xxl }}
+              style={{ marginTop: spacing.md }}
             >
               AI判定をスキップ
             </Button>
@@ -172,7 +197,25 @@ export default function PrecheckScreen() {
 
       {/* 結果フェーズ */}
       {phase === 'result' && displayResult && (
-        <RiskScoreDisplay result={displayResult} onReset={handleReset} />
+        <RiskScoreDisplay
+          result={displayResult}
+          onReset={handleReset}
+          actions={
+            <View style={styles.resultActions}>
+              <Button
+                variant="primary"
+                size="lg"
+                onPress={() => navigation.navigate('正式提出')}
+                style={styles.actionButton}
+              >
+                正式提出へ進む
+              </Button>
+              <Button variant="outline" onPress={handleReset} style={styles.actionButton}>
+                もう一度試す
+              </Button>
+            </View>
+          }
+        />
       )}
     </ScrollView>
   );
@@ -215,10 +258,14 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginTop: spacing.xl,
   },
-  executingHint: {
-    fontSize: 13,
-    color: colors.text.muted,
+  executingBanner: {
+    marginTop: spacing.lg,
+    maxWidth: 320,
+  },
+  resultActions: {
     marginTop: spacing.sm,
-    textAlign: 'center',
+  },
+  actionButton: {
+    marginTop: spacing.md,
   },
 });

@@ -3,10 +3,14 @@
  * @module features/submission/components/MediaTypeSelect
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useMediaSpecs } from '../hooks/useMediaSpecs';
-import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/selectStyles';
+import {
+  selectNativeStyles,
+  selectInlineStyle,
+  selectFocusedInlineStyle,
+} from '../../../shared/styles/selectStyles';
 
 /**
  * 媒体種別選択コンポーネント
@@ -19,6 +23,7 @@ import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/se
  *              SubmissionForm が spec を FileUploader に渡してバリデーションに使用。
  */
 export default function MediaTypeSelect({ value, onChange, disabled }) {
+  const [focused, setFocused] = useState(false);
   const { mediaSpecs, loading, error, getSpecByType } = useMediaSpecs();
 
   const handleChange = (e) => {
@@ -43,8 +48,10 @@ export default function MediaTypeSelect({ value, onChange, disabled }) {
     <select
       value={value ?? ''}
       onChange={handleChange}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       disabled={disabled}
-      style={selectInlineStyle}
+      style={focused ? selectFocusedInlineStyle : selectInlineStyle}
     >
       <option value="">媒体種別を選択してください</option>
       {mediaSpecs.map((spec) => (

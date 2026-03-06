@@ -105,6 +105,7 @@ export default function SubmissionForm({
       {/* 提出先選択 */}
       <View style={styles.section}>
         <Text style={styles.label}>提出先</Text>
+        <Text style={styles.hint}>広報物の審査先を選択してください</Text>
         <View style={styles.radioGroup}>
           <TouchableOpacity
             style={[
@@ -143,6 +144,7 @@ export default function SubmissionForm({
       {/* 団体選択 */}
       <View style={styles.section}>
         <Text style={styles.label}>団体</Text>
+        <Text style={styles.hint}>所属する団体を選択</Text>
         <OrganizationSelect
           value={formData.organizationId}
           onChange={handleOrganizationChange}
@@ -153,6 +155,7 @@ export default function SubmissionForm({
       {/* 企画選択 */}
       <View style={styles.section}>
         <Text style={styles.label}>企画</Text>
+        <Text style={styles.hint}>対象の企画を選択</Text>
         <ProjectSelect
           value={formData.projectId}
           onChange={(id) => updateField('projectId', id)}
@@ -164,6 +167,7 @@ export default function SubmissionForm({
       {/* メディア種別 */}
       <View style={styles.section}>
         <Text style={styles.label}>媒体種別</Text>
+        <Text style={styles.hint}>広報物の種類を選択（ポスター、チラシ等）</Text>
         <MediaTypeSelect
           value={formData.mediaType}
           onChange={handleMediaTypeChange}
@@ -174,6 +178,7 @@ export default function SubmissionForm({
       {/* ファイルアップロード */}
       <View style={styles.section}>
         <Text style={styles.label}>ファイル</Text>
+        <Text style={styles.hint}>審査対象のファイルをアップロード</Text>
         <FileUploader
           value={formData.file}
           onChange={(file) => updateField('file', file)}
@@ -210,6 +215,11 @@ const styles = StyleSheet.create({
   label: {
     ...typography.label,
     color: colors.text.primary,
+    marginBottom: 2,
+  },
+  hint: {
+    ...typography.caption,
+    color: colors.text.muted,
     marginBottom: spacing.sm,
   },
   radioGroup: {

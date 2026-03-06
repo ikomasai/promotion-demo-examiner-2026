@@ -3,10 +3,14 @@
  * @module features/submission/components/ProjectSelect
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useProjects } from '../hooks/useProjects';
-import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/selectStyles';
+import {
+  selectNativeStyles,
+  selectInlineStyle,
+  selectFocusedInlineStyle,
+} from '../../../shared/styles/selectStyles';
 
 /**
  * 企画選択コンポーネント
@@ -18,6 +22,7 @@ import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/se
  * }} props
  */
 export default function ProjectSelect({ value, onChange, organizationId, disabled }) {
+  const [focused, setFocused] = useState(false);
   const { projects, loading, error } = useProjects(organizationId);
 
   if (!organizationId) {
@@ -44,8 +49,10 @@ export default function ProjectSelect({ value, onChange, organizationId, disable
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || null)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       disabled={disabled}
-      style={selectInlineStyle}
+      style={focused ? selectFocusedInlineStyle : selectInlineStyle}
     >
       <option value="">企画を選択してください</option>
       {projects.map((proj) => (

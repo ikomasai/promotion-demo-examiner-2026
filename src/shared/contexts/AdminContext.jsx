@@ -65,7 +65,7 @@ export function AdminProvider({ children }) {
   const [screens, setScreens] = useState(new Set());
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(null);
-  const [modalDismissed, setModalDismissed] = useState(false);
+  const [modalDismissed, setModalDismissed] = useState(true);
 
   /**
    * 指定 screen へのアクセス権があるか判定

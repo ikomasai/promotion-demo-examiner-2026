@@ -9,6 +9,8 @@ import { View, Text, TextInput, StyleSheet } from 'react-native';
 
 /** 最低入力文字数 */
 const MIN_LENGTH = 10;
+/** 最大入力文字数 */
+const MAX_LENGTH = 500;
 
 /**
  * 高リスク時の理由入力
@@ -24,9 +26,7 @@ export default function HighRiskReasonInput({ value, onChange, disabled }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>
-        高リスク判定のため、提出理由を入力してください
-      </Text>
+      <Text style={styles.label}>高リスク判定のため、提出理由を入力してください</Text>
       <TextInput
         style={[styles.input, disabled && styles.inputDisabled]}
         value={value}
@@ -35,11 +35,12 @@ export default function HighRiskReasonInput({ value, onChange, disabled }) {
         placeholderTextColor="#666"
         multiline
         numberOfLines={4}
+        maxLength={MAX_LENGTH}
         textAlignVertical="top"
         editable={!disabled}
       />
       <Text style={[styles.counter, isValid && styles.counterValid]}>
-        {charCount}/{MIN_LENGTH}文字以上
+        {charCount}/{MAX_LENGTH}（{MIN_LENGTH}文字以上）
       </Text>
     </View>
   );

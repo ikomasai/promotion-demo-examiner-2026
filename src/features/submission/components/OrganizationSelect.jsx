@@ -3,16 +3,21 @@
  * @module features/submission/components/OrganizationSelect
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useOrganizations } from '../hooks/useOrganizations';
-import { selectNativeStyles, selectInlineStyle } from '../../../shared/styles/selectStyles';
+import {
+  selectNativeStyles,
+  selectInlineStyle,
+  selectFocusedInlineStyle,
+} from '../../../shared/styles/selectStyles';
 
 /**
  * 団体選択コンポーネント
  * @param {{ value: string|null, onChange: (id: string|null) => void, disabled: boolean }} props
  */
 export default function OrganizationSelect({ value, onChange, disabled }) {
+  const [focused, setFocused] = useState(false);
   const { organizations, loading, error } = useOrganizations();
 
   if (loading) {
@@ -31,8 +36,10 @@ export default function OrganizationSelect({ value, onChange, disabled }) {
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || null)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       disabled={disabled}
-      style={selectInlineStyle}
+      style={focused ? selectFocusedInlineStyle : selectInlineStyle}
     >
       <option value="">団体を選択してください</option>
       {organizations.map((org) => (

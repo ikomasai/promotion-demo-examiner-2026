@@ -5,8 +5,22 @@
  * @module features/submission/hooks/useSubmission
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '../../../services/supabase/client';
+
+/**
+ * エラーからユーザー向けメッセージを生成
+ */
+function getErrorMessage(err, fallback) {
+  const msg = err?.message?.toLowerCase?.() ?? '';
+  if (msg.includes('network') || msg.includes('fetch')) {
+    return 'ネットワーク接続を確認して再度お試しください';
+  }
+  if (msg.includes('timeout') || msg.includes('timed out')) {
+    return 'サーバーの応答がありません。時間をおいて再度お試しください';
+  }
+  return err?.message ? `${fallback}: ${err.message}` : fallback;
+}
 
 /**
  * 正式提出フック
@@ -24,9 +38,20 @@ import { supabase } from '../../../services/supabase/client';
 export function useSubmission() {
   const [preChecking, setPreChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState(0);
+  const progressTimerRef = useRef(null);
   const [precheckResult, setPrecheckResult] = useState(null);
   const [submitResult, setSubmitResult] = useState(null);
   const [error, setError] = useState(null);
+
+  // 提出中プログレスのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+      }
+    };
+  }, []);
 
   /**
    * プレチェック（AI判定のみ）
@@ -62,7 +87,7 @@ export function useSubmission() {
 
       setPrecheckResult(data);
     } catch (err) {
-      setError('予期しないエラーが発生しました');
+      setError(getErrorMessage(err, 'AI判定に失敗しました'));
       console.error('precheck error:', err);
     } finally {
       setPreChecking(false);
@@ -78,6 +103,12 @@ export function useSubmission() {
     setSubmitting(true);
     setError(null);
     setSubmitResult(null);
+    setSubmitProgress(25);
+
+    // 1秒ごとに5%ずつ85%まで増加
+    progressTimerRef.current = setInterval(() => {
+      setSubmitProgress((p) => Math.min(p + 5, 85));
+    }, 1000);
 
     try {
       const body = new FormData();
@@ -104,11 +135,16 @@ export function useSubmission() {
         return;
       }
 
+      setSubmitProgress(100);
       setSubmitResult(data);
     } catch (err) {
-      setError('予期しないエラーが発生しました');
+      setError(getErrorMessage(err, '提出に失敗しました'));
       console.error('submit error:', err);
     } finally {
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
       setSubmitting(false);
     }
   }, []);
@@ -125,6 +161,7 @@ export function useSubmission() {
   return {
     preChecking,
     submitting,
+    submitProgress,
     precheckResult,
     submitResult,
     error,
