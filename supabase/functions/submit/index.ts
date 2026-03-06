@@ -21,6 +21,7 @@ import {
   shareFile,
   deleteFile,
 } from '../_shared/driveClient.ts';
+import { createReportDoc } from '../_shared/docsClient.ts';
 
 serve(async (req: Request): Promise<Response> => {
   const corsResponse = handleCors(req);
@@ -147,9 +148,11 @@ serve(async (req: Request): Promise<Response> => {
     // 10. Google Drive アップロード
     let driveFileId: string | null = null;
     let driveFileUrl: string | null = null;
+    let accessToken: string | null = null;
+    let folderId: string | null = null;
 
     try {
-      const accessToken = await getAccessToken();
+      accessToken = await getAccessToken();
       const rootFolderId = Deno.env.get('GOOGLE_DRIVE_ROOT_FOLDER_ID');
       if (!rootFolderId) {
         return jsonResponse({ error: 'Google Drive が設定されていません' }, 500);
@@ -161,7 +164,7 @@ serve(async (req: Request): Promise<Response> => {
           ? ['生駒祭2026', '企画物', org.organization_name]
           : ['生駒祭2026', 'SNS', org.organization_name];
 
-      const folderId = await ensureFolder(accessToken, folderPath, rootFolderId);
+      folderId = await ensureFolder(accessToken, folderPath, rootFolderId);
       driveFileId = await uploadFile(accessToken, fileBytes, mimeType, driveFileName, folderId);
       driveFileUrl = await shareFile(accessToken, driveFileId);
     } catch (err) {
@@ -172,6 +175,35 @@ serve(async (req: Request): Promise<Response> => {
         return jsonResponse({ error: 'Google Drive が設定されていません' }, 500);
       }
       return jsonResponse({ error: 'ファイルのアップロードに失敗しました' }, 500);
+    }
+
+    // 10.5. Docs レポート作成（失敗しても提出は成功させる）
+    let docsFileId: string | null = null;
+    let docsFileUrl: string | null = null;
+
+    if (accessToken && folderId) {
+      try {
+        const docsTitle = `[AI判定] ${sanitize(org.organization_name)}-${sanitize(proj.project_name)}-${sanitize(destLabel)}-${scoreLabel}`;
+        const result = await createReportDoc(accessToken, {
+          title: docsTitle,
+          orgName: org.organization_name,
+          projName: proj.project_name,
+          submissionType: submissionType!,
+          submitterEmail: user.email ?? '',
+          submittedAt: new Date().toISOString(),
+          aiRiskScore: aiResult.ai_risk_score,
+          aiRiskDetails: aiResult.ai_risk_details,
+          checkItems: checkItems ?? [],
+          skipped: aiResult.skipped,
+          skipReason: aiResult.reason,
+          driveFileUrl,
+          folderId,
+        });
+        docsFileId = result.docsId;
+        docsFileUrl = result.docsUrl;
+      } catch (docsErr) {
+        console.error('Docs レポート作成エラー（提出は継続）:', docsErr);
+      }
     }
 
     // 11. DB INSERT (josenai_submissions)
@@ -188,6 +220,8 @@ serve(async (req: Request): Promise<Response> => {
           file_size_bytes: fileBytes.length,
           drive_file_id: driveFileId,
           drive_file_url: driveFileUrl,
+          docs_file_id: docsFileId,
+          docs_file_url: docsFileUrl,
           ai_risk_score: aiResult.ai_risk_score,
           ai_risk_details: aiResult.ai_risk_details,
           user_comment: userComment || null,
@@ -251,6 +285,7 @@ serve(async (req: Request): Promise<Response> => {
       skipped: aiResult.skipped,
       reason: aiResult.reason ?? null,
       auto_approved: autoApproved,
+      docs_url: docsFileUrl,
     });
   } catch (err) {
     console.error('submit Edge Function エラー:', err);
