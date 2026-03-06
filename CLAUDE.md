@@ -114,7 +114,7 @@ src/
 
 | 関数名 | 機能 |
 |--------|------|
-| `submit` | ファイルアップロード → Google Drive → Gemini AI 判定 → DB 登録（最も複雑） |
+| `submit` | ファイルアップロード → Gemini AI 判定 → Google Drive（スコア付きファイル名） → DB 登録（最も複雑） |
 | `sandbox` | 事前チェック専用 AI 判定（DB 書き込みなし、1日3回制限） |
 | `delete-submission` | Drive + DB からの削除（所有者チェック付き） |
 | `verify-admin-password` | 管理者ロールの bcrypt パスワード検証 |

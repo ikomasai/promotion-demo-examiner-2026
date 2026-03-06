@@ -9,11 +9,11 @@
 ## Edge Functions 一覧
 
 ### submit (最複雑)
-**POST** | ファイル提出 → Drive アップロード → AI 判定 → DB 登録
+**POST** | ファイル提出 → AI 判定 → Drive アップロード（スコア付きファイル名） → DB 登録
 ```
 multipart parse → アプリ設定取得
 ├─ precheck=true:  Gemini 判定のみ → 結果返却 (DB 書込なし)
-└─ precheck=false: Drive upload → Gemini 判定 → submissions INSERT
+└─ precheck=false: Gemini 判定 → Drive upload (団体名-企画名-提出先-(スコア%).拡張子) → submissions INSERT
                    → auto_approve 判定 → status='approved'|'pending'
 ```
 依存: `supabaseAdmin`, `geminiClient`, `driveClient`, `retry`
