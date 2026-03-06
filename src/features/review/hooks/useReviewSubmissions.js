@@ -45,15 +45,17 @@ export function useReviewSubmissions(filters = {}) {
     try {
       let query = supabase
         .from('josenai_submissions')
-        .select(`
+        .select(
+          `
           id, submission_type, media_type, file_name, file_size_bytes,
-          drive_file_id, drive_file_url,
+          drive_file_id, drive_file_url, docs_file_url,
           ai_risk_score, ai_risk_details, status,
           user_comment, reviewer_comment, reviewed_at, reviewed_by,
           version, created_at, updated_at,
           organization:josenai_organizations(organization_name),
           project:josenai_projects(project_name)
-        `)
+        `,
+        )
         .order('created_at', { ascending: false });
 
       // サーバーサイドフィルタ: submissionType（admin のみ使用）

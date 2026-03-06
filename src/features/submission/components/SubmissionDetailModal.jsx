@@ -68,12 +68,7 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <ScrollView
@@ -98,7 +93,10 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
             <View style={styles.metaSection}>
               <MetaRow label="団体" value={orgName} />
               <MetaRow label="企画" value={projName} />
-              <MetaRow label="提出先" value={TYPE_LABELS[submission.submission_type] || submission.submission_type} />
+              <MetaRow
+                label="提出先"
+                value={TYPE_LABELS[submission.submission_type] || submission.submission_type}
+              />
               <MetaRow label="メディアタイプ" value={submission.media_type} />
               <MetaRow label="ファイルサイズ" value={formatFileSize(submission.file_size_bytes)} />
               <MetaRow label="提出日時" value={formatDateJST(submission.created_at)} />
@@ -110,10 +108,7 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
             {/* AI リスクスコア */}
             <View style={styles.riskSection}>
               <Text style={styles.sectionTitle}>AI リスク判定</Text>
-              <RiskScoreDisplay
-                result={riskResult}
-                actions={<></>}
-              />
+              <RiskScoreDisplay result={riskResult} actions={<></>} />
             </View>
 
             {/* コメント */}
@@ -137,6 +132,18 @@ export default function SubmissionDetailModal({ visible, submission, onClose }) 
                 onPress={() => Linking.openURL(submission.drive_file_url)}
               >
                 <Text style={styles.driveButtonText}>Google Drive で開く</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* AI 判定レポート */}
+            {submission.docs_file_url && (
+              <TouchableOpacity
+                style={[styles.driveButton, { borderColor: '#34a853' }]}
+                onPress={() => Linking.openURL(submission.docs_file_url)}
+              >
+                <Text style={[styles.driveButtonText, { color: '#34a853' }]}>
+                  AI判定レポートを開く
+                </Text>
               </TouchableOpacity>
             )}
 

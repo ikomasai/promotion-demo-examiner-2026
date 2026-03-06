@@ -7,13 +7,24 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  ScrollView,
+  Linking,
+} from 'react-native';
 
 /**
  * リスクスコアの色とラベル
  */
 function getRiskInfo(score) {
-  if (score === null || score === undefined) return { color: '#a0a0a0', label: '判定なし', bg: '#2d2d44' };
+  if (score === null || score === undefined)
+    return { color: '#a0a0a0', label: '判定なし', bg: '#2d2d44' };
   if (score <= 10) return { color: '#4caf50', label: '低リスク', bg: '#1e3525' };
   if (score <= 50) return { color: '#ff9800', label: '中リスク', bg: '#3d3520' };
   return { color: '#f44336', label: '高リスク', bg: '#3d1e1e' };
@@ -26,9 +37,7 @@ function getRiskInfo(score) {
  */
 function extractFlaggedItems(riskDetails) {
   if (!riskDetails || !Array.isArray(riskDetails.items)) return [];
-  return riskDetails.items
-    .filter((item) => item.flagged)
-    .slice(0, 5);
+  return riskDetails.items.filter((item) => item.flagged).slice(0, 5);
 }
 
 /**
@@ -42,7 +51,14 @@ function extractFlaggedItems(riskDetails) {
  *   reviewing: boolean
  * }} props
  */
-export default function ReviewModal({ visible, submission, onApprove, onReject, onCancel, reviewing }) {
+export default function ReviewModal({
+  visible,
+  submission,
+  onApprove,
+  onReject,
+  onCancel,
+  reviewing,
+}) {
   const [comment, setComment] = useState('');
 
   // モーダルが開かれる度にコメントをリセット
@@ -70,12 +86,7 @@ export default function ReviewModal({ visible, submission, onApprove, onReject, 
   const projName = submission.project?.project_name || '不明';
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <ScrollView
@@ -95,12 +106,20 @@ export default function ReviewModal({ visible, submission, onApprove, onReject, 
               </Text>
             </View>
 
+            {/* AI 判定レポート */}
+            {submission.docs_file_url && (
+              <TouchableOpacity
+                style={styles.docsLink}
+                onPress={() => Linking.openURL(submission.docs_file_url)}
+              >
+                <Text style={styles.docsLinkText}>AI判定レポートを開く</Text>
+              </TouchableOpacity>
+            )}
+
             {/* AI リスクスコア */}
             <View style={[styles.riskBox, { backgroundColor: riskInfo.bg }]}>
               <View style={styles.riskHeader}>
-                <Text style={[styles.riskLabel, { color: riskInfo.color }]}>
-                  {riskInfo.label}
-                </Text>
+                <Text style={[styles.riskLabel, { color: riskInfo.color }]}>{riskInfo.label}</Text>
                 {submission.ai_risk_score !== null && submission.ai_risk_score !== undefined && (
                   <Text style={[styles.riskScore, { color: riskInfo.color }]}>
                     {submission.ai_risk_score}%
@@ -118,9 +137,7 @@ export default function ReviewModal({ visible, submission, onApprove, onReject, 
                     <Text style={styles.flaggedBullet}>!</Text>
                     <View style={styles.flaggedContent}>
                       <Text style={styles.flaggedName}>{item.name}</Text>
-                      {item.comment && (
-                        <Text style={styles.flaggedComment}>{item.comment}</Text>
-                      )}
+                      {item.comment && <Text style={styles.flaggedComment}>{item.comment}</Text>}
                     </View>
                   </View>
                 ))}
@@ -131,9 +148,7 @@ export default function ReviewModal({ visible, submission, onApprove, onReject, 
             <View style={styles.commentSection}>
               <Text style={styles.commentLabel}>
                 審査コメント
-                <Text style={styles.commentHint}>
-                  {' '}(却下時は必須)
-                </Text>
+                <Text style={styles.commentHint}> (却下時は必須)</Text>
               </Text>
               <TextInput
                 style={styles.commentInput}
@@ -176,11 +191,7 @@ export default function ReviewModal({ visible, submission, onApprove, onReject, 
           </View>
 
           {/* キャンセル */}
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={onCancel}
-            disabled={reviewing}
-          >
+          <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={reviewing}>
             <Text style={styles.cancelText}>キャンセル</Text>
           </TouchableOpacity>
         </View>
@@ -354,6 +365,20 @@ const styles = StyleSheet.create({
   cancelText: {
     color: '#a0a0a0',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  docsLink: {
+    backgroundColor: '#2d2d44',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#34a853',
+  },
+  docsLinkText: {
+    color: '#34a853',
+    fontSize: 13,
     fontWeight: '600',
   },
 });
