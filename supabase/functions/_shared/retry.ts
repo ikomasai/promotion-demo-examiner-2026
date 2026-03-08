@@ -13,21 +13,39 @@ interface RetryOptions {
 }
 
 /**
+ * リトライ可能なエラーかどうかを判定するデフォルト関数
+ * @description 4xx クライアントエラー（400, 401, 403, 404, 409）はリトライ不要。
+ *              5xx サーバーエラーやネットワークエラーのみリトライする。
+ */
+function isRetryableError(err: unknown): boolean {
+  if (err && typeof err === 'object') {
+    // Supabase PostgREST エラー: status プロパティを持つ
+    const status = (err as Record<string, unknown>).status;
+    if (typeof status === 'number' && status >= 400 && status < 500) {
+      return false;
+    }
+    // fetch エラー: HTTP ステータスコードを持つ場合
+    const code = (err as Record<string, unknown>).code;
+    if (typeof code === 'string' && ['PGRST301', 'PGRST116'].includes(code)) {
+      return false; // not found 等
+    }
+  }
+  return true;
+}
+
+/**
  * 指数バックオフ + ジッター付きリトライ
  * @param fn 実行する非同期関数
  * @param options リトライ設定
  * @returns fn の戻り値
  * @throws maxAttempts 到達後、最後のエラーを throw
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {},
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const {
     maxAttempts = 3,
     initialDelayMs = 1000,
     backoffMultiplier = 2,
-    retryableErrors = () => true,
+    retryableErrors = isRetryableError,
   } = options;
 
   let lastError: unknown;
@@ -50,4 +68,3 @@ export async function withRetry<T>(
 
   throw lastError;
 }
-
