@@ -5,7 +5,7 @@
  * @module features/submission/screens/PrecheckScreen
  */
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography } from '../../../shared/theme';
@@ -16,6 +16,7 @@ import { useResponsive } from '../../../shared/hooks/useResponsive';
 import SubmissionForm from '../components/SubmissionForm';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
 import { usePrecheck } from '../hooks/usePrecheck';
+import { useAICheckFlow } from '../hooks/useAICheckFlow';
 
 /**
  * 事前チェック画面
@@ -29,101 +30,22 @@ export default function PrecheckScreen() {
   const navigation = useNavigation();
   const { isMobile } = useResponsive();
 
-  /** 画面フェーズ管理 */
-  const [phase, setPhase] = useState('form');
+  const { phase, showSkipButton, elapsedSeconds, displayResult, handleReset, handleSkip } =
+    useAICheckFlow({
+      executing,
+      result,
+      error,
+      clearResult,
+      resultPhase: 'result',
+    });
 
-  /** AI スキップボタン表示フラグ（30秒後に表示） */
-  const [showSkipButton, setShowSkipButton] = useState(false);
-
-  /** 経過秒数 */
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const elapsedTimerRef = useRef(null);
-
-  /** ユーザーが手動スキップしたかどうか */
-  const skippedByUserRef = useRef(false);
-
-  /** タイマー ref */
-  const skipTimerRef = useRef(null);
-
-  // executing 状態の変化でフェーズ遷移
-  useEffect(() => {
-    if (executing) {
-      setPhase('executing');
-      setShowSkipButton(false);
-      skippedByUserRef.current = false;
-      setElapsedSeconds(0);
-      // 経過秒数カウント
-      elapsedTimerRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
-      // 30秒後にスキップボタン表示
-      skipTimerRef.current = setTimeout(() => {
-        setShowSkipButton(true);
-      }, 30000);
-    }
-    return () => {
-      if (skipTimerRef.current) {
-        clearTimeout(skipTimerRef.current);
-        skipTimerRef.current = null;
-      }
-      if (elapsedTimerRef.current) {
-        clearInterval(elapsedTimerRef.current);
-        elapsedTimerRef.current = null;
-      }
-    };
-  }, [executing]);
-
-  // 実行完了後のフェーズ遷移（result/error/skip いずれかで遷移）
-  useEffect(() => {
-    if (executing) return;
-    if (skippedByUserRef.current) return; // ユーザースキップ済みなら無視
-    if (result) {
-      setPhase('result');
-    } else if (error) {
-      setPhase('form'); // エラー時はフォームに戻す
-    }
-  }, [result, error, executing]);
-
-  /**
-   * フォーム送信 → 事前チェック実行
-   */
+  /** フォーム送信 → 事前チェック実行 */
   const handleSubmit = useCallback(
     (formData) => {
       executePrecheck(formData);
     },
     [executePrecheck],
   );
-
-  /**
-   * リセット → フォームフェーズに戻る
-   */
-  const handleReset = useCallback(() => {
-    clearResult();
-    setPhase('form');
-    setShowSkipButton(false);
-  }, [clearResult]);
-
-  /**
-   * AI スキップ → synthetic skipped result を表示
-   */
-  const handleSkip = useCallback(() => {
-    if (skipTimerRef.current) {
-      clearTimeout(skipTimerRef.current);
-      skipTimerRef.current = null;
-    }
-    // Edge Function のレスポンスが遅れて来ても無視する
-    skippedByUserRef.current = true;
-    clearResult();
-    setPhase('result');
-  }, [clearResult]);
-
-  // スキップ用の synthetic result
-  const displayResult = useMemo(() => {
-    if (phase === 'result' && !result) {
-      return { ai_risk_score: null, ai_risk_details: null, skipped: true, reason: 'timeout' };
-    }
-    return result;
-  }, [phase, result]);
 
   return (
     <ScrollView

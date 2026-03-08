@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
-import { colors, spacing, typography, radii } from '../../../shared/theme';
+import { colors, spacing, typography } from '../../../shared/theme';
 import Button from '../../../shared/components/Button';
 import Banner from '../../../shared/components/Banner';
 import SubmissionForm from '../components/SubmissionForm';
@@ -16,6 +16,7 @@ import RiskScoreDisplay from '../components/RiskScoreDisplay';
 import SubmissionConfirmModal from '../components/SubmissionConfirmModal';
 import HighRiskReasonInput from '../components/HighRiskReasonInput';
 import { useSubmission } from '../hooks/useSubmission';
+import { useAICheckFlow } from '../hooks/useAICheckFlow';
 
 /**
  * リスクレベルを判定
@@ -48,24 +49,8 @@ export default function SubmitScreen() {
 
   const { isMobile } = useResponsive();
 
-  /** 画面フェーズ管理 */
-  const [phase, setPhase] = useState('form');
-
   /** フォームデータを保持（precheck → submit 間で再利用） */
   const formDataRef = useRef(null);
-
-  /** AI スキップボタン表示フラグ */
-  const [showSkipButton, setShowSkipButton] = useState(false);
-
-  /** 経過秒数 */
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const elapsedTimerRef = useRef(null);
-
-  /** ユーザーが手動スキップしたかどうか */
-  const skippedByUserRef = useRef(false);
-
-  /** タイマー ref */
-  const skipTimerRef = useRef(null);
 
   /** 中リスク確認モーダル */
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
@@ -73,47 +58,24 @@ export default function SubmitScreen() {
   /** 高リスク時のユーザーコメント */
   const [userComment, setUserComment] = useState('');
 
-  /** 提出中ステップ（submitProgress から算出） */
+  // AI判定フロー共通フック
+  const {
+    phase,
+    setPhase,
+    showSkipButton,
+    elapsedSeconds,
+    displayResult: displayPrecheckResult,
+    handleReset: resetAIFlow,
+    handleSkip,
+  } = useAICheckFlow({
+    executing: preChecking,
+    result: precheckResult,
+    error,
+    clearResult: clearAll,
+    resultPhase: 'risk_check',
+  });
 
-  // preChecking 開始でフェーズ遷移
-  useEffect(() => {
-    if (preChecking) {
-      setPhase('executing');
-      setShowSkipButton(false);
-      skippedByUserRef.current = false;
-      setElapsedSeconds(0);
-      // 経過秒数カウント
-      elapsedTimerRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
-      skipTimerRef.current = setTimeout(() => {
-        setShowSkipButton(true);
-      }, 30000);
-    }
-    return () => {
-      if (skipTimerRef.current) {
-        clearTimeout(skipTimerRef.current);
-        skipTimerRef.current = null;
-      }
-      if (elapsedTimerRef.current) {
-        clearInterval(elapsedTimerRef.current);
-        elapsedTimerRef.current = null;
-      }
-    };
-  }, [preChecking]);
-
-  // precheck 完了後のフェーズ遷移
-  useEffect(() => {
-    if (preChecking) return;
-    if (skippedByUserRef.current) return;
-    if (precheckResult) {
-      setPhase('risk_check');
-    } else if (error && phase === 'executing') {
-      setPhase('form');
-    }
-  }, [precheckResult, error, preChecking, phase]);
-
-  // submitProgress からステップを算出（25%区切り: 0-24→0, 25-49→1, 50-74→2, 75-100→3）
+  // submitProgress からステップを算出（25%区切り）
   const submitStep = Math.min(Math.floor(submitProgress / 25), 3);
 
   // submitting 状態でフェーズ遷移
@@ -121,7 +83,7 @@ export default function SubmitScreen() {
     if (submitting) {
       setPhase('submitting');
     }
-  }, [submitting]);
+  }, [submitting, setPhase]);
 
   // submit 完了でフェーズ遷移
   useEffect(() => {
@@ -129,14 +91,11 @@ export default function SubmitScreen() {
     if (submitResult) {
       setPhase('done');
     } else if (error && phase === 'submitting') {
-      // 提出エラー時は risk_check に戻す
       setPhase('risk_check');
     }
-  }, [submitResult, error, submitting, phase]);
+  }, [submitResult, error, submitting, phase, setPhase]);
 
-  /**
-   * フォーム送信 → AI プレチェック実行
-   */
+  /** フォーム送信 → AI プレチェック実行 */
   const handlePrecheck = useCallback(
     (formData) => {
       formDataRef.current = formData;
@@ -146,53 +105,24 @@ export default function SubmitScreen() {
     [precheck],
   );
 
-  /**
-   * 正式提出実行
-   */
+  /** 正式提出実行 */
   const handleSubmit = useCallback(() => {
     if (!formDataRef.current) return;
     submit(formDataRef.current, userComment || undefined);
   }, [submit, userComment]);
 
-  /**
-   * 中リスク: モーダルから確認 → 提出
-   */
+  /** 中リスク: モーダルから確認 → 提出 */
   const handleConfirmSubmit = useCallback(() => {
     setConfirmModalVisible(false);
     handleSubmit();
   }, [handleSubmit]);
 
-  /**
-   * リセット → フォームに戻る
-   */
+  /** リセット → フォームに戻る */
   const handleReset = useCallback(() => {
-    clearAll();
+    resetAIFlow();
     formDataRef.current = null;
-    setPhase('form');
-    setShowSkipButton(false);
     setUserComment('');
-  }, [clearAll]);
-
-  /**
-   * AI スキップ → risk_check フェーズへ（synthetic skipped result）
-   */
-  const handleSkip = useCallback(() => {
-    if (skipTimerRef.current) {
-      clearTimeout(skipTimerRef.current);
-      skipTimerRef.current = null;
-    }
-    skippedByUserRef.current = true;
-    clearAll();
-    setPhase('risk_check');
-  }, [clearAll]);
-
-  // 表示用の precheck result（スキップ時は synthetic）
-  const displayPrecheckResult = useMemo(() => {
-    if (phase === 'risk_check' && !precheckResult) {
-      return { ai_risk_score: null, ai_risk_details: null, skipped: true, reason: 'timeout' };
-    }
-    return precheckResult;
-  }, [phase, precheckResult]);
+  }, [resetAIFlow]);
 
   const riskLevel = displayPrecheckResult
     ? getRiskLevel(displayPrecheckResult.ai_risk_score, displayPrecheckResult.skipped)
@@ -200,22 +130,18 @@ export default function SubmitScreen() {
 
   const isHighRiskReasonValid = userComment.length >= HighRiskReasonInput.MIN_LENGTH;
 
-  /**
-   * リスクレベル別アクションボタンを構築
-   */
+  /** リスクレベル別アクションボタン */
   const riskActions = useMemo(() => {
     if (!displayPrecheckResult) return null;
 
     return (
       <View style={styles.riskActions}>
-        {/* 低リスク: 直接提出 */}
         {riskLevel === 'low' && (
           <Button variant="primary" size="lg" onPress={handleSubmit} style={styles.actionButton}>
             提出する
           </Button>
         )}
 
-        {/* 中リスク: 確認モーダル経由 */}
         {riskLevel === 'medium' && (
           <Button
             variant="warning"
@@ -227,7 +153,6 @@ export default function SubmitScreen() {
           </Button>
         )}
 
-        {/* 高リスク: 理由入力 + 提出 */}
         {riskLevel === 'high' && (
           <>
             <HighRiskReasonInput value={userComment} onChange={setUserComment} disabled={false} />
@@ -243,14 +168,12 @@ export default function SubmitScreen() {
           </>
         )}
 
-        {/* スキップ: AI判定なしで提出 */}
         {riskLevel === 'skipped' && (
           <Button variant="muted" size="lg" onPress={handleSubmit} style={styles.actionButton}>
             AI判定なしで提出する
           </Button>
         )}
 
-        {/* やり直しボタン（全リスクレベル共通） */}
         <Button variant="outline" onPress={handleReset} style={styles.actionButton}>
           やり直す
         </Button>
@@ -334,13 +257,11 @@ export default function SubmitScreen() {
       {/* 提出中フェーズ — ステップ進捗表示 */}
       {phase === 'submitting' && (
         <View style={styles.executingContainer}>
-          {/* 進捗バー */}
           <View style={styles.progressBarBg}>
             <View style={[styles.progressBarFill, { width: `${submitProgress}%` }]} />
           </View>
           <Text style={styles.executingHint}>正式提出を処理しています...</Text>
 
-          {/* ステップリスト */}
           <View style={styles.stepList}>
             {[
               'AI判定を実行中...',
