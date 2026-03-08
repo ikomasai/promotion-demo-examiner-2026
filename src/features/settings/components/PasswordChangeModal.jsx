@@ -13,13 +13,7 @@ import Button from '../../../shared/components/Button';
 import FormInput from '../../../shared/components/FormInput';
 
 import { supabase } from '../../../services/supabase/client';
-
-/** ロール → 表示名 */
-const ROLE_LABELS = {
-  koho: '広報部',
-  kikaku: '企画管理部',
-  super: '管理者',
-};
+import { ROLE_LABELS, MIN_PASSWORD_LENGTH } from '../../../shared/constants/adminConfig';
 
 /**
  * パスワード変更モーダル
@@ -41,12 +35,14 @@ export default function PasswordChangeModal({ visible, role, onClose, onSuccess 
   const roleLabel = role ? ROLE_LABELS[role] : '';
 
   const validate = () => {
-    if (newPassword.length < 4) return 'パスワードは4文字以上で入力してください';
+    if (newPassword.length < MIN_PASSWORD_LENGTH)
+      return `パスワードは${MIN_PASSWORD_LENGTH}文字以上で入力してください`;
     if (newPassword !== confirmPassword) return 'パスワードが一致しません';
     return null;
   };
 
-  const canSubmit = newPassword.length >= 4 && newPassword === confirmPassword && !submitting;
+  const canSubmit =
+    newPassword.length >= MIN_PASSWORD_LENGTH && newPassword === confirmPassword && !submitting;
 
   const handleSubmit = async () => {
     const validationError = validate();
@@ -59,10 +55,9 @@ export default function PasswordChangeModal({ visible, role, onClose, onSuccess 
     setSubmitting(true);
 
     try {
-      const { data, error: funcError } = await supabase.functions.invoke(
-        'update-password',
-        { body: { role, newPassword } }
-      );
+      const { data, error: funcError } = await supabase.functions.invoke('update-password', {
+        body: { role, newPassword },
+      });
 
       if (funcError) {
         setError('パスワード変更処理中にエラーが発生しました');
@@ -97,7 +92,7 @@ export default function PasswordChangeModal({ visible, role, onClose, onSuccess 
 
           <FormInput
             label="新しいパスワード"
-            placeholder="4文字以上"
+            placeholder={`${MIN_PASSWORD_LENGTH}文字以上`}
             secureTextEntry
             value={newPassword}
             onChangeText={setNewPassword}

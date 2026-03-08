@@ -8,13 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../services/supabase/client';
-
-/** パスワードハッシュキー（クライアント表示から除外） */
-const PASSWORD_KEYS = new Set([
-  'koho_admin_password_hash',
-  'kikaku_admin_password_hash',
-  'super_admin_password_hash',
-]);
+import { PASSWORD_KEYS } from '../../../shared/constants/adminConfig';
 
 /**
  * システム設定フック

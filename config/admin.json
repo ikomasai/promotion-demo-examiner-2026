@@ -1,0 +1,37 @@
+{
+  "roles": {
+    "koho": {
+      "label": "広報部",
+      "description": "広報部宛（koho）提出の審査が可能",
+      "passwordKey": "koho_admin_password_hash",
+      "screens": ["josenai_review_koho"]
+    },
+    "kikaku": {
+      "label": "企画管理部",
+      "description": "企画管理部宛（kikaku）提出の審査が可能",
+      "passwordKey": "kikaku_admin_password_hash",
+      "screens": ["josenai_review_kikaku"]
+    },
+    "super": {
+      "label": "管理者",
+      "description": "全機能にアクセス可能（設定・マスタ管理含む）",
+      "passwordKey": "super_admin_password_hash",
+      "screens": ["josenai_review_koho", "josenai_review_kikaku", "josenai_admin"]
+    }
+  },
+  "screens": {
+    "REVIEW_KOHO": "josenai_review_koho",
+    "REVIEW_KIKAKU": "josenai_review_kikaku",
+    "ADMIN": "josenai_admin"
+  },
+  "validation": {
+    "minPasswordLength": 8
+  },
+  "defaults": {
+    "sandbox_daily_limit": 3,
+    "ai_timeout_seconds": 30,
+    "submission_enabled": true,
+    "auto_approve_enabled": false,
+    "auto_approve_threshold": 10
+  }
+}

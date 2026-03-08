@@ -17,28 +17,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAdmin } from '../../../shared/contexts/AdminContext';
-
-/**
- * 権限オプション定義
- * @type {Array<{value: string, label: string, description: string}>}
- */
-const ROLE_OPTIONS = [
-  {
-    value: 'koho',
-    label: '広報部',
-    description: '広報部宛（koho）提出の審査が可能',
-  },
-  {
-    value: 'kikaku',
-    label: '企画管理部',
-    description: '企画管理部宛（kikaku）提出の審査が可能',
-  },
-  {
-    value: 'super',
-    label: '管理者',
-    description: '全機能にアクセス可能（設定・マスタ管理含む）',
-  },
-];
+import { ROLE_OPTIONS } from '../../../shared/constants/adminConfig';
 
 /**
  * 管理者パスワードモーダル
@@ -79,19 +58,12 @@ export default function AdminPasswordModal({ visible, onClose, onSuccess }) {
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           {/* ヘッダー */}
           <Text style={styles.title}>管理者認証</Text>
-          <Text style={styles.subtitle}>
-            権限を選択してパスワードを入力してください
-          </Text>
+          <Text style={styles.subtitle}>権限を選択してパスワードを入力してください</Text>
 
           {/* 権限選択 */}
           <View style={styles.roleContainer}>
