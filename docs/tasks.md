@@ -47,7 +47,7 @@
 
 ### 2.2 認証コンテキスト
 
-- [X] T009 src/shared/contexts/AuthContext.jsx に AuthContext を作成（Google OAuth、@kindai.ac.jp ドメイン制限、user_profiles + josenai_profiles upsert）
+- [X] T009 src/shared/contexts/AuthContext.jsx に AuthContext を作成（メール/パスワード認証、@kindai.ac.jp ドメイン制限、user_profiles + josenai_profiles upsert）
 - [X] T010 [P] src/shared/contexts/AdminContext.jsx に AdminContext を作成（画面ベース RBAC 管理、Edge Function 経由の bcrypt 検証）
 - [X] T011 [P] src/shared/contexts/ToastContext.jsx に ToastContext を作成（アプリ全体の通知）
 

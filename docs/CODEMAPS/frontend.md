@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-05 | Files scanned: 42 | Token estimate: ~900 -->
+<!-- Updated: 2026-03-08 | Files scanned: 48 | Token estimate: ~1000 -->
 # Frontend
 
 ## 画面一覧 (8画面)
@@ -6,8 +6,8 @@
 | 画面名 | ファイル | ロール | 主要 Hook |
 |--------|---------|--------|-----------|
 | ログイン | `src/features/auth/screens/LoginScreen.jsx` | 未認証 | `useAuth()` |
-| 事前チェック | `src/features/submission/screens/PrecheckScreen.jsx` | 全員 | `usePrecheck()` |
-| 正式提出 | `src/features/submission/screens/SubmitScreen.jsx` | 全員 | `useSubmission()` |
+| 事前チェック | `src/features/submission/screens/PrecheckScreen.jsx` | 全員 | `usePrecheck()`, `useAICheckFlow()` |
+| 正式提出 | `src/features/submission/screens/SubmitScreen.jsx` | 全員 | `useSubmission()`, `useAICheckFlow()` |
 | 提出履歴 | `src/features/submission/screens/HistoryScreen.jsx` | 全員 | `useSubmissionHistory()`, `useSubmissionDelete()` |
 | 審査ダッシュボード | `src/features/review/screens/DashboardScreen.jsx` | レビューア | `useReviewSubmissions()`, `useReview()` |
 | ルール管理 | `src/features/rules/screens/RuleListScreen.jsx` | レビューア | `useRuleDocuments()` |
@@ -34,7 +34,7 @@ AppNavigator
 ```
 src/features/
 ├─ auth/          screens: 1, components: 1 (AdminPasswordModal)
-├─ submission/    screens: 3, components: 12, hooks: 7
+├─ submission/    screens: 3, components: 12, hooks: 8
 ├─ review/        screens: 1, components: 3, hooks: 2
 ├─ rules/         screens: 1, components: 3, hooks: 1
 ├─ master/        screens: 1, components: 3, hooks: 2
@@ -45,8 +45,14 @@ src/features/
 
 | コンポーネント | 用途 |
 |--------------|------|
+| `Button` | 汎用ボタン（solid/outline、5色、3サイズ） |
+| `Badge` | ステータスバッジ |
+| `Card` | コンテンツカード |
+| `Banner` | 情報バナー |
+| `ConfirmModal` | 確認モーダルダイアログ |
+| `FormInput` | ラベル・エラー表示付きテキスト入力 |
 | `LoadingSpinner` | 全画面ローディング |
-| `ScreenErrorBoundary` | 画面例外キャッチ |
+| `ScreenErrorBoundary` | 画面例外キャッチ（App.jsx ルート + 各画面） |
 | `SkeletonLoader` / `SkeletonCard` | データ読込プレースホルダ |
 | `PlaceholderContent` | 空状態表示 |
 
@@ -55,6 +61,7 @@ src/features/
 **Submission hooks** (`src/features/submission/hooks/`):
 - `usePrecheck()` → sandbox Edge Function, 日次制限管理
 - `useSubmission()` → submit Edge Function, 5フェーズ (form→executing→risk_check→submitting→done)
+- `useAICheckFlow()` → **PrecheckScreen/SubmitScreen 共有フック**。AI判定の共通フェーズ遷移ロジック（タイムアウト、スキップ、中リスク確認、高リスク理由入力）を抽出
 - `useSubmissionHistory()` → josenai_submissions SELECT
 - `useSubmissionDelete()` → delete-submission Edge Function
 - `useOrganizations()` / `useProjects()` → マスタデータ取得

@@ -100,19 +100,35 @@ project-root/
 │   │   │   └── index.ts
 │   │   ├── verify-admin-password/
 │   │   │   └── index.ts
+│   │   ├── update-password/
+│   │   │   └── index.ts
+│   │   ├── delete-submission/
+│   │   │   └── index.ts
 │   │   ├── import-organizations/
 │   │   │   └── index.ts
 │   │   ├── import-projects/
 │   │   │   └── index.ts
 │   │   └── _shared/
-│   │       ├── supabase.ts
-│   │       ├── driveClient.ts
-│   │       └── geminiClient.ts
+│   │       ├── middleware.ts              # withAuth() — 全関数共通の認証ミドルウェア
+│   │       ├── cors.ts                    # CORS ヘッダー + プリフライト処理
+│   │       ├── response.ts               # jsonResponse() 標準レスポンス生成
+│   │       ├── auth.ts                    # extractToken(), createUserClient(), PASSWORD_KEYS
+│   │       ├── adminConfig.ts             # admin.json から定数導出
+│   │       ├── admin.json                 # ロール定義 (Single Source of Truth)
+│   │       ├── supabase.ts                # supabaseAdmin + supabaseAnon シングルトン
+│   │       ├── geminiClient.ts            # Gemini API ラッパー
+│   │       ├── driveClient.ts             # Google Drive API クライアント
+│   │       ├── docsClient.ts              # Google Docs AI判定レポート生成
+│   │       ├── checkItems.ts              # fetchActiveCheckItems()
+│   │       └── retry.ts                   # withRetry() 指数バックオフ
 │   ├── migrations/
 │   │   ├── josenai_001_schema.sql
 │   │   ├── josenai_002_rls.sql
 │   │   └── josenai_003_seed.sql
 │   └── config.toml
+│
+├── config/
+│   └── admin.json                      # ロール定義・バリデーション・デフォルト値
 │
 ├── src/
 │   ├── features/                       # 機能ごとにまとめる
@@ -133,6 +149,7 @@ project-root/
 │   │   │   │   ├── RiskScoreDisplay.jsx
 │   │   │   │   └── SubmissionForm.jsx
 │   │   │   ├── hooks/
+│   │   │   │   ├── useAICheckFlow.js       # AI判定の共通フェーズ遷移ロジック
 │   │   │   │   ├── useOrganizations.js     # 団体一覧取得
 │   │   │   │   ├── useProjects.js          # 企画一覧取得
 │   │   │   │   └── useSubmission.js
@@ -174,11 +191,21 @@ project-root/
 │   │
 │   ├── shared/                         # 共通で使うもの
 │   │   ├── components/
-│   │   │   ├── PlaceholderContent.jsx
-│   │   │   └── ScreenErrorBoundary.jsx
+│   │   │   ├── Badge.jsx               # ステータスバッジ
+│   │   │   ├── Banner.jsx              # 情報バナー
+│   │   │   ├── Button.jsx              # 汎用ボタン
+│   │   │   ├── Card.jsx                # コンテンツカード
+│   │   │   ├── ConfirmModal.jsx        # 確認モーダル
+│   │   │   ├── FormInput.jsx           # フォーム入力
+│   │   │   ├── LoadingSpinner.jsx      # ローディング
+│   │   │   ├── PlaceholderContent.jsx  # 空状態表示
+│   │   │   ├── ScreenErrorBoundary.jsx # エラー境界
+│   │   │   ├── SkeletonCard.jsx        # スケルトンカード
+│   │   │   └── SkeletonLoader.jsx      # スケルトンローダー
 │   │   ├── hooks/
 │   │   ├── utils/
 │   │   ├── constants/
+│   │   │   └── adminConfig.js          # admin.json から導出
 │   │   └── contexts/
 │   │
 │   ├── navigation/                     # ナビゲーション
@@ -1052,10 +1079,15 @@ POST /drive/v3/files/{fileId}/permissions
 | エンドポイント | メソッド | 認証 | 説明 |
 |---------------|---------|------|------|
 | /functions/v1/sandbox | POST | 必要 | 事前チェック AI 判定 |
-| /functions/v1/submit | POST | 必要 | 正式提出（自動承認判定を含む） |
-| /functions/v1/review | POST | 管理者 | 審査（承認/却下） |
+| /functions/v1/submit | POST | 必要 | 正式提出（AI判定 + Drive + Docs + 自動承認） |
+| /functions/v1/review | POST | 審査権限 | 審査（承認/却下、楽観的ロック） |
+| /functions/v1/delete-submission | POST | 必要 | 提出削除（Drive ファイル削除） |
+| /functions/v1/verify-admin-password | POST | 必要 | 管理者パスワード検証 |
+| /functions/v1/update-password | POST | 管理者 | 管理者パスワード変更 |
 | /functions/v1/import-organizations | POST | 管理者 | 団体 CSV インポート |
 | /functions/v1/import-projects | POST | 管理者 | 企画 CSV インポート |
+
+> 全関数は `withAuth()` ミドルウェアで CORS + JWT 認証を統一処理。API 詳細は [docs/CODEMAPS/edge-function-api.md](CODEMAPS/edge-function-api.md) を参照。
 
 #### submit Edge Function — 自動承認ロジック
 
@@ -1091,11 +1123,18 @@ if (autoEnabled && ai_risk_score !== null && ai_risk_score <= threshold) {
   "success": true,
   "submission_id": "uuid",
   "ai_risk_score": 5,
-  "auto_approved": true
+  "ai_risk_details": { ... },
+  "skipped": false,
+  "reason": null,
+  "auto_approved": true,
+  "docs_url": "https://docs.google.com/document/d/..."
 }
 ```
 
 - `auto_approved`: 自動承認が実行された場合 `true`、それ以外は `false`
+- `skipped`: AI 判定がスキップされた場合 `true`（タイムアウト、API エラー等）
+- `reason`: スキップ理由（`"timeout"`, `"api_error"` 等、正常時は `null`）
+- `docs_url`: AI 判定レポート Google Docs URL（生成失敗時は `null`）
 - フロントエンドは `auto_approved = true` 時に「自動承認されました」のトースト通知を表示する
 
 ### CSV インポート API

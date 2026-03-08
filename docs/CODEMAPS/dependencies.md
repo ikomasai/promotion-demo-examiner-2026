@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-05 | Files scanned: 4 | Token estimate: ~600 -->
+<!-- Updated: 2026-03-08 | Files scanned: 5 | Token estimate: ~650 -->
 # Dependencies
 
 ## 外部サービス統合
@@ -65,12 +65,15 @@ checkout → setup Node 20 (npm cache)
 
 **Edge Functions デプロイ**: 手動 (`supabase functions deploy <name>` or Supabase MCP)
 
-## ファイル構成サマリ
+## 設定ファイル
 
 ```
-.github/workflows/deploy.yml   CI/CD パイプライン
-.env.example                    環境変数テンプレート
-app.json                        Expo 設定 (アプリ名: 生駒祭 情宣AI)
-package.json                    依存関係 (npm)
-supabase/config.toml            Supabase ローカル設定
+config/admin.json                ロール定義・バリデーション・デフォルト値 (Single Source of Truth)
+.github/workflows/deploy.yml    CI/CD パイプライン
+.env.example                     環境変数テンプレート
+app.json                         Expo 設定 (アプリ名: 生駒祭 情宣AI)
+package.json                     依存関係 (npm)
+supabase/config.toml             Supabase ローカル設定
 ```
+
+`config/admin.json` はフロントエンド (`src/shared/constants/adminConfig.js`) とバックエンド (`supabase/functions/_shared/adminConfig.ts`) の両方から参照される。
